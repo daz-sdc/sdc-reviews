@@ -1,18 +1,20 @@
+/* eslint-disable no-use-before-define */
 /* eslint-disable comma-dangle */
 /* eslint-disable no-unused-vars */
+// eslint-disable-next-line import/newline-after-import
 const mongoose = require('mongoose');
+const { Schema } = mongoose;
 
-const metaSchema = mongoose.Schema({
+const metaSchema = new Schema({
   product_id: Number,
-  recommended: Number,
-  not_recommended: Number,
-  rating: Number,
-  characteristic_id: Number,
-  characteristic_value: Number
+  characteristics: [{
+    char_id: Number,
+    char_value: String
+  }],
+  reviews: [reviewSchema]
 });
 
-const reviewSchema = mongoose.Schema({
-  product_id: Number,
+const reviewSchema = new Schema({
   review_id: Number,
   rating: Number,
   summary: String,
@@ -21,11 +23,9 @@ const reviewSchema = mongoose.Schema({
   date: Date,
   reviewer_name: String,
   reviewer_email: String,
-  helpfulness: Number
-});
-
-const photoSchema = mongoose.Schema({
-  review_id: Number,
-  photo_id: Number,
-  photo_url: String
+  helpfulness: Number,
+  photos: [{
+    photo_id: Number,
+    photo_url: String
+  }]
 });
