@@ -2,8 +2,10 @@
 // Hndles request flow
 // Never handles data logic
 exports.getReviews = (req, res) => {
-
+  console.log(req.query.product_id);
+  res.send('OK!!');
 };
+
 
 exports.getReviewsMeta = (req, res) => {
 
