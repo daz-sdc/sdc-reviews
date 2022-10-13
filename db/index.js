@@ -3,21 +3,32 @@
 /* eslint-disable no-console */
 
 
+
+
+
+
+
 // Don't understand:
-require('dotenv').config();
-const { Pool } = require('pg'); //connection
+// require('dotenv').config();
+// const { Pool } = require('pg'); // connection
 
-const pool = new Pool();
+// // const connectionString = process.env.CONNECTION_STRING; ??????????
 
-module.exports = {
-  async query(text, params) {
-    const start = Date.now();
-    const res = await pool.query(text, params);
-    const duration = Date.now() - start;
-    console.log('executed query', { text, duration, rows: res.rowCount });
-    return res;
-  },
-};
+// const pool = new Pool();
+
+// module.exports = {
+//   async query(text, params) {
+//     const start = Date.now();
+//     const res = await pool.query(text, params);
+//     const duration = Date.now() - start;
+//     console.log('executed query', { text, duration, rows: res.rowCount });
+//     return res;
+//   },
+// };
+
+
+
+
 
 
 
@@ -31,3 +42,23 @@ module.exports = {
 //   host:
 // });
 
+
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  user: 'postgres',
+  host: 'localhost',
+  database: 'hello123',
+  password: 'sdn1993',
+  port: 5432,
+});
+
+module.exports = {
+  async query(text, params) {
+    const start = Date.now();
+    const res = await pool.query(text, params);
+    const duration = Date.now() - start;
+    console.log('executed query', { text, duration, rows: res.rowCount });
+    return res;
+  },
+};
