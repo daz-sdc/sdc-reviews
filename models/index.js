@@ -29,6 +29,11 @@ exports.getReviewsRelevant = (id, count, page) => {
   const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
                 FROM reviews
                 WHERE $1::integer IS NULL or product = $1::integer
+                ORDER BY
+                CASE WHEN (date_part('year', (SELECT current_timestamp)) - EXTRACT(YEAR FROM date) <= 2)
+                     THEN helpfulness END DESC,
+                CASE WHEN (date_part('year', (SELECT current_timestamp)) - EXTRACT(YEAR FROM date) > 2)
+                     THEN date END DESC
                 LIMIT $2
                 OFFSET ($3 - 1) * $2`;
   const params = [id, count, page];
