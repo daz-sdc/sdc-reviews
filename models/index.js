@@ -3,11 +3,35 @@
 // Interacts with database
 const db = require('../db/index');
 
-exports.getReviews = (id) => {
+exports.getReviewsHelpful = (id, count, page) => {
   const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
                 FROM reviews
-                WHERE $1::integer IS NULL or product = $1::integer`;
-  const params = [id];
+                WHERE $1::integer IS NULL or product = $1::integer
+                ORDER BY helpfulness DESC
+                LIMIT $2
+                OFFSET ($3 - 1) * $2`;
+  const params = [id, count, page];
+  return db.query(text, params);
+};
+
+exports.getReviewsNewest = (id, count, page) => {
+  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
+                FROM reviews
+                WHERE $1::integer IS NULL or product = $1::integer
+                ORDER BY date DESC
+                LIMIT $2
+                OFFSET ($3 - 1) * $2`;
+  const params = [id, count, page];
+  return db.query(text, params);
+};
+
+exports.getReviewsRelevant = (id, count, page) => {
+  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
+                FROM reviews
+                WHERE $1::integer IS NULL or product = $1::integer
+                LIMIT $2
+                OFFSET ($3 - 1) * $2`;
+  const params = [id, count, page];
   return db.query(text, params);
 };
 
