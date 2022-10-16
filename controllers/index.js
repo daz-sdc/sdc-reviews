@@ -1,3 +1,4 @@
+/* eslint-disable prefer-destructuring */
 /* eslint-disable no-undef */
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-plusplus */
@@ -90,11 +91,26 @@ exports.getReviewsMeta = async (req, res) => {
   //   .then((result) => {
   //     console.log('``````getRatings```````', result.rows);
   //   })
-  //   .catch((err) => {
-  //     console.log(err);
-  //   });
+  //   .catch((err) => console.log(err));
   const arrOfRatings = await models.getRatings(productId);
-  // console.log('ratings.rows', arrOfRatings.rows);
+  const objOfRatings = {};
+  arrOfRatings.rows.forEach((rating) => {
+    const valsOfRating = Object.values(rating);
+    objOfRatings[valsOfRating[0].toString()] = valsOfRating[1];
+  });
+  console.log('objOfRatings', objOfRatings);
+  // models.getRecommended(productId)
+  //   .then((result) => {
+  //     console.log('````````getRecommended````````', result.rows);
+  //   })
+  //   .catch((err) => console.log(err));
+  const arrOfRecommended = await models.getRecommended(productId);
+  const objOfRecommended = {};
+  arrOfRecommended.rows.forEach((recommend) => {
+    const valsOfRecommend = Object.values(recommend);
+    objOfRecommended[valsOfRecommend[0].toString()] = valsOfRecommend[1];
+  });
+  console.log(' objOfRecommended', objOfRecommended);
   res.send('getReviewsMeta!!');
 };
 

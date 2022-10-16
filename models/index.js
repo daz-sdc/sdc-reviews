@@ -66,3 +66,12 @@ exports.getRatings = (id) => {
   const params = [id];
   return db.query(text, params);
 };
+
+exports.getRecommended = (id) => {
+  const text = `SELECT recommend, count(recommend)
+                FROM reviews
+                WHERE $1::integer IS NULL or product = $1::integer
+                GROUP BY recommend`;
+  const params = [id];
+  return db.query(text, params);
+};
