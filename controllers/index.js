@@ -98,7 +98,7 @@ exports.getReviewsMeta = async (req, res) => {
     const valsOfRating = Object.values(rating);
     objOfRatings[valsOfRating[0].toString()] = valsOfRating[1];
   });
-  console.log('objOfRatings', objOfRatings);
+  // console.log('objOfRatings', objOfRatings);
   // models.getRecommended(productId)
   //   .then((result) => {
   //     console.log('````````getRecommended````````', result.rows);
@@ -110,15 +110,26 @@ exports.getReviewsMeta = async (req, res) => {
     const valsOfRecommend = Object.values(recommend);
     objOfRecommended[valsOfRecommend[0].toString()] = valsOfRecommend[1];
   });
-  console.log(' objOfRecommended', objOfRecommended);
+  // console.log('objOfRecommended', objOfRecommended);
+  // models.getCharacteristics(productId)
+  //   .then((result) => {
+  //     console.log('````````getCharacteristics```````', result.rows);
+  //   })
+  //   .catch((err) => console.log(err));
+  const arrOfCharacteristics = await models.getCharacteristics(productId);
+  const objOfCharacteristics = {};
+  arrOfCharacteristics.rows.forEach((char) => {
+    const valsOfChar = Object.values(char);
+    objOfCharacteristics[valsOfChar[2]] = {
+      id: valsOfChar[0],
+      value: valsOfChar[1],
+    };
+  });
+  // console.log('objOfCharacteristics', objOfCharacteristics);
   output.ratings = objOfRatings;
   output.recommended = objOfRecommended;
+  output.characteristics = objOfCharacteristics;
   console.log('output', output);
-  models.getCharacteristics(productId)
-    .then((result) => {
-      console.log('````````getCharacteristics```````', result.rows);
-    })
-    .catch((err) => console.log(err));
   res.send(output);
 };
 
