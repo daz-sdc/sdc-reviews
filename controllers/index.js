@@ -81,16 +81,20 @@ exports.getReviews = async (req, res) => {
   //   });
 };
 
-exports.getReviewsMeta = (req, res) => {
+exports.getReviewsMeta = async (req, res) => {
   const productId = req.query.product_id;
-  console.log(productId);
-  models.getRatings(productId)
-    .then((result) => {
-      console.log('``````getRatings```````', result.rows);
-    })
-    .catch((err) => {
-      console.log(err);
-    });
+  const output = {
+    product_id: productId,
+  };
+  // models.getRatings(productId)
+  //   .then((result) => {
+  //     console.log('``````getRatings```````', result.rows);
+  //   })
+  //   .catch((err) => {
+  //     console.log(err);
+  //   });
+  const arrOfRatings = await models.getRatings(productId);
+  // console.log('ratings.rows', arrOfRatings.rows);
   res.send('getReviewsMeta!!');
 };
 
