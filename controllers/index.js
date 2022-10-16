@@ -83,6 +83,14 @@ exports.getReviews = async (req, res) => {
 
 exports.getReviewsMeta = (req, res) => {
   const productId = req.query.product_id;
+  console.log(productId);
+  models.getRatings(productId)
+    .then((result) => {
+      console.log('``````getRatings```````', result.rows);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
   res.send('getReviewsMeta!!');
 };
 

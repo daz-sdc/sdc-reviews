@@ -51,8 +51,18 @@ exports.getReviewsRelevant = (id, count, page) => {
 
 exports.getPhotos = (reviewId) => {
   const text = `SELECT id, url
-                From reviews_photos
+                FROM reviews_photos
                 WHERE $1::integer IS NULL or review_id = $1::integer`;
   const params = [reviewId];
+  return db.query(text, params);
+};
+
+// Meta:
+exports.getRatings = (id) => {
+  const text = `SELECT rating, count(rating)
+                FROM reviews
+                WHERE $1::integer IS NULL or product = $1::integer
+                GROUP BY rating`;
+  const params = [id];
   return db.query(text, params);
 };
