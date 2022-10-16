@@ -75,3 +75,14 @@ exports.getRecommended = (id) => {
   const params = [id];
   return db.query(text, params);
 };
+
+exports.getCharacteristics = (id) => {
+  const text = `SELECT c.id, AVG(cr.value), c.name
+                FROM characteristic_reviews as cr
+                JOIN characteristics as c
+                ON cr.characteristic_id = c.id
+                WHERE $1::integer IS NULL or product_id = $1::integer
+                GROUP BY c.id`;
+  const params = [id];
+  return db.query(text, params);
+};

@@ -111,7 +111,15 @@ exports.getReviewsMeta = async (req, res) => {
     objOfRecommended[valsOfRecommend[0].toString()] = valsOfRecommend[1];
   });
   console.log(' objOfRecommended', objOfRecommended);
-  res.send('getReviewsMeta!!');
+  output.ratings = objOfRatings;
+  output.recommended = objOfRecommended;
+  console.log('output', output);
+  models.getCharacteristics(productId)
+    .then((result) => {
+      console.log('````````getCharacteristics```````', result.rows);
+    })
+    .catch((err) => console.log(err));
+  res.send(output);
 };
 
 exports.postReviews = (req, res) => {
