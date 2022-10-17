@@ -1,3 +1,6 @@
+/* eslint-disable indent */
+/* eslint-disable no-trailing-spaces */
+/* eslint-disable no-multiple-empty-lines */
 /* eslint-disable prefer-destructuring */
 /* eslint-disable no-undef */
 /* eslint-disable no-param-reassign */
@@ -51,36 +54,54 @@ exports.getReviews = async (req, res) => {
   // console.log('FINAL ARRAY', arr);
   // res.send(arr);
 
-  // models.getReviews(productId)
+
+
+
+// ******************** My Previous code that doesn't work:************************* //
+  // const arr = [];
+  // if (sort === 'relevant') {
+  //   models.getReviewsRelevant(productId, count, page)
   //   .then((result) => {
+  //     console.log('result.rows', result.rows); // <--- this works
   //     for (let i = 0; i < result.rows.length; i++) {
   //       const obj = result.rows[i];
   //       models.getPhotos(obj.review_id)
   //         .then((result) => {
   //           obj.photos = result.rows;
-  //           console.log('object', obj);
+  //           console.log('object', obj); // <--- this works
   //           return obj;
   //         })
   //         .then((obj) => {
   //           arr.push(obj);
   //         })
-  //         .then((arr) => {
+  //         .then(() => {
   //           if (arr.length === result.rows.length) {
-  //             console.log('arr', arr);
+  //             console.log('arr', arr); // <--- this works
   //           }
   //         })
-  //         .catch((err) => console.log(err));
+  //         .catch((err) => console.log('???errrrrr???', err));
   //     }
   //   })
   //   .then(() => {
-  //     console.log('******result******', arr);
+  //     console.log('******REVIEWS RESULT******', arr); // <--- THIS DOESN'T WORK, and it returns an empty array
   //     res.send('haha');
   //   })
   //   .catch((err) => {
   //     console.log('******err/controllers/getReviews******', err);
   //     res.send(err);
   //   });
+  // }
 };
+
+
+
+
+
+
+
+
+
+
 
 exports.getReviewsMeta = async (req, res) => {
   const productId = req.query.product_id;
@@ -134,6 +155,7 @@ exports.getReviewsMeta = async (req, res) => {
 };
 
 exports.postReviews = (req, res) => {
+  console.log('requestBody', req.body);
 };
 
 exports.putReviewsHelpfulness = (req, res) => {
