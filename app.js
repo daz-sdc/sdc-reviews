@@ -9,9 +9,9 @@ const app = express();
 app.use(express.json());
 app.use(routes);
 
-// app.get('/', (req, res) => {
-//   res.status(200).send('Hello World!');
-// });
+app.get('/', (req, res) => {
+  res.status(200).send('Ratings & Reviews SDC!');
+});
 
 module.exports = app;
 

@@ -90,5 +90,6 @@ exports.getCharacteristics = (id) => {
 exports.postReviews = (obj) => {
   const text = `INSERT INTO reviews (product, rating, summary, body, recommend, name, email, photos, characteristics)
                 VALUES (${obj.product}, ${obj.rating}, ${obj.summary}, ${obj.body}, ${obj.recommend}, ${obj.name}, ${obj.email}, ${obj.photos}, ${obj.characteristics})`;
-
+  const params = [obj];
+  return db.query(text, params);
 };
