@@ -153,6 +153,14 @@ exports.getReviewsMeta = async (req, res) => {
 
 exports.postReviews = (req, res) => {
   console.log('requestBody', req.body);
+  models.postReviews(req.body)
+    .then((data) => {
+      res.status(201).send(data);
+    })
+    .catch((err) => {
+      console.log('ERR POSTREVIEWS', err);
+      res.status(501).send(err);
+    });
 };
 
 exports.putReviewsHelpfulness = (req, res) => {

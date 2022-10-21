@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable no-unused-vars */
 // Handles data logic
 // Interacts with database
@@ -88,8 +89,21 @@ exports.getCharacteristics = (id) => {
 };
 
 exports.postReviews = (obj) => {
-  const text = `INSERT INTO reviews (product, rating, summary, body, recommend, name, email, photos, characteristics)
-                VALUES (${obj.product}, ${obj.rating}, ${obj.summary}, ${obj.body}, ${obj.recommend}, ${obj.name}, ${obj.email}, ${obj.photos}, ${obj.characteristics})`;
-  const params = [obj];
-  return db.query(text, params);
+  // const datetime = new Date(Date.now()).toISOString();
+  // const now = datetime.replace('Z', ' ').replace('T', ' ');
+  // INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
+  // SELECT max(review_id) + 1, 20, 5, current_timestamp, 'testing summary on Oct 20', 'BODY', 't', 'f', 'ds', 'ds@gmail.com', 'null', 0 FROM reviews;
+  const text1 = `INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
+                SELECT max(review_id) + 1, $1, $2, current_timestamp, $3, $4, $5, FALSE, $6, $7, NULL, 0 FROM reviews`;
+  // const text1 = `INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
+  //               SELECT max(review_id) + 1, ${obj.product_id}, ${obj.rating}, current_timestamp, "${obj.summary}", "${obj.body}", "${obj.recommend}", "f", "${obj.name}", "${obj.email}", "NULL", 0 FROM reviews`;
+  // Q1. review_id will be generated automatically as it is the PK???                   Q2. also need to generate the current date and insert into the table
+  // const text2 = `INSERT INTO reviews_photos (review_id, url)
+  //               VALUES (${})`;
+  //               // Q1. obj.photos is an array, how to seperate the array to insert row by row??       Q2. review_id is from the previous INSERT
+  // const text3 = `INSERT INTO characteristic_reviews (review_id, characteristic_id, value)
+  //               VALUES ()`
+  //               // Q1. review_id is from the previous INSERT                                          Q2. obj.characteristics is an obj, how to seperate the object key/value pair to insert seperately into each row and column
+  const params = [obj.product_id, obj.rating, obj.summary, obj.body, obj.recommend, obj.name, obj.email];
+  return db.query(text1, params);
 };
