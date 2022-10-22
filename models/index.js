@@ -1,3 +1,7 @@
+/* eslint-disable no-unreachable */
+/* eslint-disable no-multiple-empty-lines */
+/* eslint-disable padded-blocks */
+/* eslint-disable no-trailing-spaces */
 /* eslint-disable max-len */
 /* eslint-disable no-unused-vars */
 // Handles data logic
@@ -89,21 +93,84 @@ exports.getCharacteristics = (id) => {
 };
 
 exports.postReviews = (obj) => {
-  // const datetime = new Date(Date.now()).toISOString();
-  // const now = datetime.replace('Z', ' ').replace('T', ' ');
-  // INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
-  // SELECT max(review_id) + 1, 20, 5, current_timestamp, 'testing summary on Oct 20', 'BODY', 't', 'f', 'ds', 'ds@gmail.com', 'null', 0 FROM reviews;
-  const text1 = `INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
-                SELECT max(review_id) + 1, $1, $2, current_timestamp, $3, $4, $5, FALSE, $6, $7, NULL, 0 FROM reviews`;
+  // // const datetime = new Date(Date.now()).toISOString();
+  // // const now = datetime.replace('Z', ' ').replace('T', ' ');
+
+  // // pgAdmin's test: INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
+  // // SELECT max(review_id) + 1, 20, 5, current_timestamp, 'testing summary on Oct 20', 'BODY', 't', 'f', 'ds', 'ds@gmail.com', 'null', 0 FROM reviews;
+  // // Previous: const text1 = `INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
+  // //               SELECT max(review_id) + 1, ${obj.product_id}, ${obj.rating}, current_timestamp, "${obj.summary}", "${obj.body}", "${obj.recommend}", "f", "${obj.name}", "${obj.email}", "NULL", 0 FROM reviews`;
+
   // const text1 = `INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
-  //               SELECT max(review_id) + 1, ${obj.product_id}, ${obj.rating}, current_timestamp, "${obj.summary}", "${obj.body}", "${obj.recommend}", "f", "${obj.name}", "${obj.email}", "NULL", 0 FROM reviews`;
-  // Q1. review_id will be generated automatically as it is the PK???                   Q2. also need to generate the current date and insert into the table
-  // const text2 = `INSERT INTO reviews_photos (review_id, url)
-  //               VALUES (${})`;
-  //               // Q1. obj.photos is an array, how to seperate the array to insert row by row??       Q2. review_id is from the previous INSERT
-  // const text3 = `INSERT INTO characteristic_reviews (review_id, characteristic_id, value)
-  //               VALUES ()`
-  //               // Q1. review_id is from the previous INSERT                                          Q2. obj.characteristics is an obj, how to seperate the object key/value pair to insert seperately into each row and column
-  const params = [obj.product_id, obj.rating, obj.summary, obj.body, obj.recommend, obj.name, obj.email];
-  return db.query(text1, params);
+  //                SELECT max(review_id) + 1, $1, $2, current_timestamp, $3, $4, $5, FALSE, $6, $7, NULL, 0 FROM reviews
+  //                RETURNING review_id`;
+
+  // obj.photos.forEach((photoUrl) => {
+  //   const text2 = `INSERT INTO reviews_photos (id, review_id, url)
+  //                  SELECT max(id) + 1, review_id, photoUrl FROM ins1
+  //                  RETURNING review_id`;
+  // });
+
+  // obj.characteristics.forEach((charId) => {
+  //   const charVal = obj.characteristics.charId;
+  //   const text3 = `INSERT INTO characteristic_reviews (id, characteristic_id, review_id, value)
+  //                  SELECT max(id) + 1, charId, review_id, charVal FROM ins1`;
+  // });
+
+  // const params = [obj.product_id, obj.rating, obj.summary, obj.body, obj.recommend, obj.name, obj.email, obj.photos, obj.characteristics];
+  // return db.query(text1, params);
+
+
+  // testing code:
+  // const text = `WITH ins1 AS (
+  //               INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
+  //               SELECT max(review_id) + 1, $1, $2, current_timestamp, $3, $4, $5, FALSE, $6, $7, NULL, 0 FROM reviews
+  //               RETURNING review_id;
+  //               )
+  //             , ins2 AS (
+  //               BEGIN
+  //                 FOREACH photoUrl IN ARRAY $8
+  //                 LOOP
+  //                   INSERT INTO reviews_photos (id, review_id, url)
+  //                   SELECT max(id) + 1, review_id, photoUrl FROM ins1
+  //                   RETURNING review_id
+  //                 END LOOP;
+  //               END)
+  //             BEGIN
+  //               FOREACH charId IN ARRAY $10
+  //               LOOP
+  //                 INSERT INTO characteristic_reviews (id, characteristic_id, review_id, value)
+  //                 SELECT max(id) + 1, charId, review_id, $9[charId] FROM ins1
+  //               END LOOP;
+  //             END
+  //             )`;
+
+  const text = `WITH ins1 AS (
+    INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
+    SELECT max(review_id) + 1, $1, $2, current_timestamp, $3, $4, $5, FALSE, $6, $7, NULL, 0 FROM reviews
+    RETURNING review_id;
+    )
+  , ins2 AS (
+    DO $FN$
+    BEGIN
+      FOREACH photoUrl IN ARRAY $8
+      LOOP
+        EXECUTE $$ INSERT INTO reviews_photos (id, review_id, url)
+        SELECT max(id) + 1, review_id, photoUrl FROM ins1
+        RETURNING review_id $$
+      END LOOP;
+    END;
+    $FN$)
+  (DO $FN$
+  BEGIN
+    FOREACH charId IN ARRAY $10
+    LOOP
+      EXECUTE $$ INSERT INTO characteristic_reviews (id, characteristic_id, review_id, value)
+      SELECT max(id) + 1, charId, review_id, $9[charId] FROM ins1 $$
+    END LOOP;
+  END;
+  $FN$)`;
+
+  const params = [obj.product_id, obj.rating, obj.summary, obj.body, obj.recommend, obj.name, obj.email, obj.photos, obj.characteristics, Object.keys(obj.characteristics)];
+  return db.query(text, params);
 };
