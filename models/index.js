@@ -109,23 +109,23 @@ exports.postReviews = async (obj) => {
   db.query(text1, params1);
   const rid = await db.query(text1, params1); // send to the db
 
-  obj.photos.forEach((photoUrl, index) => {
-    // console.log('URL', photoUrl); // works
-    console.log('RID: ', rid.rows[0].review_id);
+
+  obj.photos.forEach((photoUrl) => {
     const rewid = rid.rows[0].review_id;
+    console.log('RID: ', rewid);
     const text2 = `INSERT INTO reviews_photos (id, review_id, url) SELECT max(id) + 1, ${rewid}, '${photoUrl}' FROM reviews_photos`;
     db.query(text2);
   });
 
-  // obj.characteristics.forEach((charId) => {
-  //   const charVal = obj.characteristics.charId;
-  //   const text3 = `INSERT INTO characteristic_reviews (id, characteristic_id, review_id, value)
-  //                  SELECT max(id) + 1, charId, ${rid}, charVal FROM characteristic_reviews`;
-  //   db.query(text3, params);
-  // });
-
-  // const params = [obj.product_id, obj.rating, obj.summary, obj.body, obj.recommend, obj.name, obj.email, obj.photos, obj.characteristics];
-  // return db.query(text1, params);
+  Object.keys(obj.characteristics).forEach((charId) => {
+    const charVal = obj.characteristics[charId];
+    console.log('charVal', charVal);
+    const rewid = rid.rows[0].review_id;
+    console.log('RIDDD: ', rewid);
+    const text3 = `INSERT INTO characteristic_reviews (id, characteristic_id, review_id, value) SELECT max(id) + 1, ${charId}, ${rewid}, ${charVal} FROM characteristic_reviews`;
+    db.query(text3);
+  });
+  // INSERT INTO characteristic_reviews (id, characteristic_id, review_id, value) SELECT max(id) + 1, 123321123321, 5774990, 1 FROM characteristic_reviews;
 
 
   // testing code:
