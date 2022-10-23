@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable no-unreachable */
 /* eslint-disable no-multiple-empty-lines */
 /* eslint-disable padded-blocks */
@@ -92,7 +93,7 @@ exports.getCharacteristics = (id) => {
   return db.query(text, params);
 };
 
-exports.postReviews = (obj) => {
+exports.postReviews = async (obj) => {
   // // const datetime = new Date(Date.now()).toISOString();
   // // const now = datetime.replace('Z', ' ').replace('T', ' ');
 
@@ -101,20 +102,26 @@ exports.postReviews = (obj) => {
   // // Previous: const text1 = `INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
   // //               SELECT max(review_id) + 1, ${obj.product_id}, ${obj.rating}, current_timestamp, "${obj.summary}", "${obj.body}", "${obj.recommend}", "f", "${obj.name}", "${obj.email}", "NULL", 0 FROM reviews`;
 
-  // const text1 = `INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
-  //                SELECT max(review_id) + 1, $1, $2, current_timestamp, $3, $4, $5, FALSE, $6, $7, NULL, 0 FROM reviews
-  //                RETURNING review_id`;
+  const text1 = `INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
+                 SELECT max(review_id) + 1, $1, $2, current_timestamp, $3, $4, $5, FALSE, $6, $7, NULL, 0 FROM reviews
+                 RETURNING review_id`;
+  const params1 = [obj.product_id, obj.rating, obj.summary, obj.body, obj.recommend, obj.name, obj.email];
+  db.query(text1, params1);
+  const rid = await db.query(text1, params1); // send to the db
 
-  // obj.photos.forEach((photoUrl) => {
-  //   const text2 = `INSERT INTO reviews_photos (id, review_id, url)
-  //                  SELECT max(id) + 1, review_id, photoUrl FROM ins1
-  //                  RETURNING review_id`;
-  // });
+  obj.photos.forEach((photoUrl, index) => {
+    // console.log('URL', photoUrl); // works
+    console.log('RID: ', rid.rows[0].review_id);
+    const rewid = rid.rows[0].review_id;
+    const text2 = `INSERT INTO reviews_photos (id, review_id, url) SELECT max(id) + 1, ${rewid}, '${photoUrl}' FROM reviews_photos`;
+    db.query(text2);
+  });
 
   // obj.characteristics.forEach((charId) => {
   //   const charVal = obj.characteristics.charId;
   //   const text3 = `INSERT INTO characteristic_reviews (id, characteristic_id, review_id, value)
-  //                  SELECT max(id) + 1, charId, review_id, charVal FROM ins1`;
+  //                  SELECT max(id) + 1, charId, ${rid}, charVal FROM characteristic_reviews`;
+  //   db.query(text3, params);
   // });
 
   // const params = [obj.product_id, obj.rating, obj.summary, obj.body, obj.recommend, obj.name, obj.email, obj.photos, obj.characteristics];
@@ -145,32 +152,31 @@ exports.postReviews = (obj) => {
   //             END
   //             )`;
 
-  const text = `WITH ins1 AS (
-    INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
-    SELECT max(review_id) + 1, $1, $2, current_timestamp, $3, $4, $5, FALSE, $6, $7, NULL, 0 FROM reviews
-    RETURNING review_id;
-    )
-  , ins2 AS (
-    DO $FN$
-    BEGIN
-      FOREACH photoUrl IN ARRAY $8
-      LOOP
-        EXECUTE $$ INSERT INTO reviews_photos (id, review_id, url)
-        SELECT max(id) + 1, review_id, photoUrl FROM ins1
-        RETURNING review_id $$
-      END LOOP;
-    END;
-    $FN$)
-  (DO $FN$
-  BEGIN
-    FOREACH charId IN ARRAY $10
-    LOOP
-      EXECUTE $$ INSERT INTO characteristic_reviews (id, characteristic_id, review_id, value)
-      SELECT max(id) + 1, charId, review_id, $9[charId] FROM ins1 $$
-    END LOOP;
-  END;
-  $FN$)`;
-
-  const params = [obj.product_id, obj.rating, obj.summary, obj.body, obj.recommend, obj.name, obj.email, obj.photos, obj.characteristics, Object.keys(obj.characteristics)];
-  return db.query(text, params);
+  // const text = `WITH ins1 AS (
+  //   INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
+  //   SELECT max(review_id) + 1, $1, $2, current_timestamp, $3, $4, $5, FALSE, $6, $7, NULL, 0 FROM reviews
+  //   RETURNING review_id;
+  //   )
+  // , ins2 AS (
+  //   DO $FN$
+  //   BEGIN
+  //     FOREACH photoUrl IN ARRAY $8
+  //     LOOP
+  //       EXECUTE $$ INSERT INTO reviews_photos (id, review_id, url)
+  //       SELECT max(id) + 1, review_id, photoUrl FROM ins1
+  //       RETURNING review_id $$
+  //     END LOOP;
+  //   END;
+  //   $FN$)
+  // (DO $FN$
+  // BEGIN
+  //   FOREACH charId IN ARRAY $10
+  //   LOOP
+  //     EXECUTE $$ INSERT INTO characteristic_reviews (id, characteristic_id, review_id, value)
+  //     SELECT max(id) + 1, charId, review_id, $9[charId] FROM ins1 $$
+  //   END LOOP;
+  // END;
+  // $FN$)`;
 };
+
+
