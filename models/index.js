@@ -185,4 +185,10 @@ exports.putReviewsHelpfulness = (obj) => {
   return db.query(text);
 };
 
+exports.putReviewsReport = (obj) => {
+  const reviewId = obj.review_id;
+  const text = `UPDATE reviews SET reported = NOT reported WHERE review_id = ${reviewId}`;
+  return db.query(text);
+};
+
 

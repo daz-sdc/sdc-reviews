@@ -167,7 +167,7 @@ exports.putReviewsHelpfulness = (req, res) => {
   console.log('PUT******putReviewsHelpfulness******requestBody', req.body);
   models.putReviewsHelpfulness(req.body)
     .then((data) => {
-      console.log('putReviewsHelpfulness success', data);
+      console.log('putReviewsHelpfulness success');
       res.status(204).send(data);
     })
     .catch((err) => {
@@ -177,7 +177,16 @@ exports.putReviewsHelpfulness = (req, res) => {
 };
 
 exports.putReviewsReport = (req, res) => {
-
+  console.log('PUT******putReviewsReport******requestBody', req.body);
+  models.putReviewsReport(req.body)
+  .then((data) => {
+    console.log('putReviewsReport success');
+    res.status(204).send(data);
+  })
+  .catch((err) => {
+    console.log('ERR PUTREVIEWSREPORTED', err);
+    res.status(501).send(err);
+  });
 };
 
 // localhost:8000/reviews?product_id=71701
