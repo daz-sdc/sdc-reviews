@@ -94,20 +94,20 @@ exports.getCharacteristics = (id) => {
 };
 
 exports.postReviews = async (obj) => {
-  // // const datetime = new Date(Date.now()).toISOString();
-  // // const now = datetime.replace('Z', ' ').replace('T', ' ');
+  // const datetime = new Date(Date.now()).toISOString();
+  // const now = datetime.replace('Z', ' ').replace('T', ' ');
 
-  // // pgAdmin's test: INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
-  // // SELECT max(review_id) + 1, 20, 5, current_timestamp, 'testing summary on Oct 20', 'BODY', 't', 'f', 'ds', 'ds@gmail.com', 'null', 0 FROM reviews;
-  // // Previous: const text1 = `INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
-  // //               SELECT max(review_id) + 1, ${obj.product_id}, ${obj.rating}, current_timestamp, "${obj.summary}", "${obj.body}", "${obj.recommend}", "f", "${obj.name}", "${obj.email}", "NULL", 0 FROM reviews`;
+  // pgAdmin's test: INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
+  // SELECT max(review_id) + 1, 20, 5, current_timestamp, 'testing summary on Oct 20', 'BODY', 't', 'f', 'ds', 'ds@gmail.com', 'null', 0 FROM reviews;
+  // Previous: const text1 = `INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
+  //               SELECT max(review_id) + 1, ${obj.product_id}, ${obj.rating}, current_timestamp, "${obj.summary}", "${obj.body}", "${obj.recommend}", "f", "${obj.name}", "${obj.email}", "NULL", 0 FROM reviews`;
 
   const text1 = `INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
                  SELECT max(review_id) + 1, $1, $2, current_timestamp, $3, $4, $5, FALSE, $6, $7, NULL, 0 FROM reviews
                  RETURNING review_id`;
   const params1 = [obj.product_id, obj.rating, obj.summary, obj.body, obj.recommend, obj.name, obj.email];
   db.query(text1, params1);
-  const rid = await db.query(text1, params1); // send to the db
+  const rid = await db.query(text1, params1); // running db.query will send to the db
 
 
   obj.photos.forEach((photoUrl) => {
@@ -125,10 +125,10 @@ exports.postReviews = async (obj) => {
     const text3 = `INSERT INTO characteristic_reviews (id, characteristic_id, review_id, value) SELECT max(id) + 1, ${charId}, ${rewid}, ${charVal} FROM characteristic_reviews`;
     db.query(text3);
   });
+  // testing query works in pgAdmin:
   // INSERT INTO characteristic_reviews (id, characteristic_id, review_id, value) SELECT max(id) + 1, 123321123321, 5774990, 1 FROM characteristic_reviews;
 
-
-  // testing code:
+  // testing code that can't work:
   // const text = `WITH ins1 AS (
   //               INSERT INTO reviews (review_id, product, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
   //               SELECT max(review_id) + 1, $1, $2, current_timestamp, $3, $4, $5, FALSE, $6, $7, NULL, 0 FROM reviews
@@ -177,6 +177,12 @@ exports.postReviews = async (obj) => {
   //   END LOOP;
   // END;
   // $FN$)`;
+};
+
+exports.putReviewsHelpfulness = (obj) => {
+  const reviewId = obj.review_id;
+  const text = `UPDATE reviews SET helpfulness = helpfulness + 1 WHERE review_id = ${reviewId}`;
+  return db.query(text);
 };
 
 

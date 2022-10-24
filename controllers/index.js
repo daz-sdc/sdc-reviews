@@ -152,7 +152,7 @@ exports.getReviewsMeta = async (req, res) => {
 };
 
 exports.postReviews = (req, res) => {
-  console.log('requestBody', req.body);
+  console.log('POST******postReviews******requestBody', req.body);
   models.postReviews(req.body)
     .then((data) => {
       res.status(201).send(data);
@@ -164,7 +164,16 @@ exports.postReviews = (req, res) => {
 };
 
 exports.putReviewsHelpfulness = (req, res) => {
-
+  console.log('PUT******putReviewsHelpfulness******requestBody', req.body);
+  models.putReviewsHelpfulness(req.body)
+    .then((data) => {
+      console.log('putReviewsHelpfulness success', data);
+      res.status(204).send(data);
+    })
+    .catch((err) => {
+      console.log('ERR PUTREVIEWSHELPFULNESS', err);
+      res.status(501).send(err);
+    });
 };
 
 exports.putReviewsReport = (req, res) => {

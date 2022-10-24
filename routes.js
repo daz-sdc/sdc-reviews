@@ -12,8 +12,8 @@ const {
 
 router.route('/reviews').get(getReviews);
 router.route('/reviews/meta').get(getReviewsMeta);
-// router.route('/reviews').post(postReviews);
-router.post('/reviews', postReviews);
+router.route('/reviews').post(postReviews);
+// router.post('/reviews', postReviews);
 router.route('/reviews/:review_id/helpful').put(putReviewsHelpfulness);
 router.route('/revies/:review_id/report').put(putReviewsReport);
 
