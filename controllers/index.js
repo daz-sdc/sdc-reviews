@@ -18,15 +18,13 @@ exports.getReviews = async (req, res) => {
   const count = Number(req.query.count) || 5;
   const sort = (!['newest', 'helpful', 'relevant'].includes(req.query.sort)) ? 'relevant' : req.query.sort;
   const productId = req.query.product_id;
-  console.log(page, count, productId, sort);
+  // console.log(page, count, productId, sort);
   const output = {
     product: productId,
     page,
     count,
   };
-  // res.send('getReviews!!');
-  // console.log('this is a promise', models.getReviews(page, count, sort, productId));
-  // const reviews = await models.getReviews(productId, count, page);
+
   let reviews;
 
   if (sort === 'helpful') {
@@ -36,7 +34,7 @@ exports.getReviews = async (req, res) => {
   } else {
     reviews = await models.getReviewsRelevant(productId, count, page);
   }
-  console.log('reviews!!!', reviews.rows);
+  // console.log('reviews!!!', reviews.rows);
   const arr = reviews.rows.map(async (review) => {
     const photos = await models.getPhotos(review.review_id);
     review.photos = photos.rows;
@@ -48,50 +46,9 @@ exports.getReviews = async (req, res) => {
     // console.log('FINAL ARRAY', bigBox);
     // res.send(bigBox);
     output.results = bigBox;
-    console.log('FINAL OUTPUT', output);
+    // console.log('FINAL OUTPUT', output);
     res.send(output);
   });
-
-  // console.log('FINAL ARRAY', arr);
-  // res.send(arr);
-
-
-
-
-// ******************** My Previous code that doesn't work:************************* //
-  // const arr = [];
-  // if (sort === 'relevant') {
-  //   models.getReviewsRelevant(productId, count, page)
-  //   .then((result) => {
-  //     console.log('result.rows', result.rows); // <--- this works
-  //     for (let i = 0; i < result.rows.length; i++) {
-  //       const obj = result.rows[i];
-  //       models.getPhotos(obj.review_id)
-  //         .then((result) => {
-  //           obj.photos = result.rows;
-  //           console.log('object', obj); // <--- this works
-  //           return obj;
-  //         })
-  //         .then((obj) => {
-  //           arr.push(obj);
-  //         })
-  //         .then(() => {
-  //           if (arr.length === result.rows.length) {
-  //             console.log('arr', arr); // <--- this works
-  //           }
-  //         })
-  //         .catch((err) => console.log('???errrrrr???', err));
-  //     }
-  //   })
-  //   .then(() => {
-  //     console.log('******REVIEWS RESULT******', arr); // <--- THIS DOESN'T WORK, and it returns an empty array
-  //     res.send('haha');
-  //   })
-  //   .catch((err) => {
-  //     console.log('******err/controllers/getReviews******', err);
-  //     res.send(err);
-  //   });
-  // }
 };
 
 
@@ -99,92 +56,103 @@ exports.getReviews = async (req, res) => {
 
 
 
-
+// promise.all
+// newrelic npm
 exports.getReviewsMeta = async (req, res) => {
   const productId = req.query.product_id;
   const output = {
     product_id: productId,
   };
-  // models.getRatings(productId)
-  //   .then((result) => {
-  //     console.log('``````getRatings```````', result.rows);
-  //   })
-  //   .catch((err) => console.log(err));
+
   const arrOfRatings = await models.getRatings(productId);
   const objOfRatings = {};
   arrOfRatings.rows.forEach((rating) => {
     const valsOfRating = Object.values(rating);
     objOfRatings[valsOfRating[0].toString()] = valsOfRating[1];
   });
-  // console.log('objOfRatings', objOfRatings);
-  // models.getRecommended(productId)
-  //   .then((result) => {
-  //     console.log('````````getRecommended````````', result.rows);
-  //   })
-  //   .catch((err) => console.log(err));
+
   const arrOfRecommended = await models.getRecommended(productId);
   const objOfRecommended = {};
   arrOfRecommended.rows.forEach((recommend) => {
     const valsOfRecommend = Object.values(recommend);
     objOfRecommended[valsOfRecommend[0].toString()] = valsOfRecommend[1];
   });
-  // console.log('objOfRecommended', objOfRecommended);
-  // models.getCharacteristics(productId)
-  //   .then((result) => {
-  //     console.log('````````getCharacteristics```````', result.rows);
-  //   })
-  //   .catch((err) => console.log(err));
+
   const arrOfCharacteristics = await models.getCharacteristics(productId);
   const objOfCharacteristics = {};
-  arrOfCharacteristics.rows.forEach((char) => {
-    const valsOfChar = Object.values(char);
-    objOfCharacteristics[valsOfChar[2]] = {
-      id: valsOfChar[0],
-      value: valsOfChar[1],
+  arrOfCharacteristics.forEach(async (obj) => {
+    // console.log('~~~EACH~~~', obj);
+    objOfCharacteristics[obj.name] = {
+      id: obj.id,
+      value: obj.avg,
     };
   });
-  // console.log('objOfCharacteristics', objOfCharacteristics);
+  // arrOfCharacteristics
+  // .then((res) => {
+  //   console.log('res of arrofCharacteristics', res);
+  //   res.forEach((obj) => {
+  //     objOfCharacteristics[obj.name] = {
+  //       id: obj.id,
+  //       value: obj.avg,
+  //     };
+  //   });
+  //   console.log('***objOfCharacteristics***', objOfCharacteristics);
+  // })
+  // .catch((err) => {
+  //   console.log('err of arrofCharacteristics', err);
+  // });
+
+
+  // const objOfCharacteristics = {};
+  // arrOfCharacteristics.rows.forEach((char) => {
+  //   const valsOfChar = Object.values(char);
+  //   objOfCharacteristics[valsOfChar[2]] = {
+  //     id: valsOfChar[0],
+  //     value: valsOfChar[1],
+  //   };
+  // });
+
   output.ratings = objOfRatings;
   output.recommended = objOfRecommended;
   output.characteristics = objOfCharacteristics;
-  console.log('output', output);
+  // console.log('output', output);
   res.send(output);
 };
 
 exports.postReviews = (req, res) => {
-  console.log('POST******postReviews******requestBody', req.body);
+  // console.log('POST******postReviews******requestBody', req.body);
   models.postReviews(req.body)
     .then((data) => {
       res.status(201).send(data);
     })
     .catch((err) => {
-      console.log('ERR POSTREVIEWS', err);
+      // console.log('ERR POSTREVIEWS', err);
       res.status(501).send(err);
     });
 };
 
 exports.putReviewsHelpfulness = (req, res) => {
-  console.log('PUT******putReviewsHelpfulness******requestBody', req.body);
+  // console.log('PUT******putReviewsHelpfulness******requestBody', req.body);
   models.putReviewsHelpfulness(req.body)
     .then((data) => {
-      console.log('putReviewsHelpfulness success');
+      // console.log('putReviewsHelpfulness success');
       res.status(204).send(data);
     })
     .catch((err) => {
-      console.log('ERR PUTREVIEWSHELPFULNESS', err);
+      // console.log('ERR PUTREVIEWSHELPFULNESS', err);
       res.status(501).send(err);
     });
 };
 
 exports.putReviewsReport = (req, res) => {
-  console.log('PUT******putReviewsReport******requestBody', req.body);
+  // console.log('PUT******putReviewsReport******requestBody', req.body);
   models.putReviewsReport(req.body)
   .then((data) => {
-    console.log('putReviewsReport success');
+    // console.log('putReviewsReport success');
     res.status(204).send(data);
   })
   .catch((err) => {
-    console.log('ERR PUTREVIEWSREPORTED', err);
+    // console.log('ERR PUTREVIEWSREPORTED', err);
     res.status(501).send(err);
   });
 };

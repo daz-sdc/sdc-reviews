@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable no-console */
 /* eslint-disable no-unreachable */
 /* eslint-disable no-multiple-empty-lines */
@@ -12,7 +13,7 @@ const db = require('../db/index');
 exports.getReviewsHelpful = (id, count, page) => {
   const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
                 FROM reviews
-                WHERE $1::integer IS NULL or product = $1::integer
+                WHERE product = $1
                 ORDER BY helpfulness DESC
                 LIMIT $2
                 OFFSET ($3 - 1) * $2`;
@@ -23,7 +24,7 @@ exports.getReviewsHelpful = (id, count, page) => {
 exports.getReviewsNewest = (id, count, page) => {
   const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
                 FROM reviews
-                WHERE $1::integer IS NULL or product = $1::integer
+                WHERE product = $1
                 ORDER BY date DESC
                 LIMIT $2
                 OFFSET ($3 - 1) * $2`;
@@ -34,7 +35,7 @@ exports.getReviewsNewest = (id, count, page) => {
 exports.getReviewsRelevant = (id, count, page) => {
   const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
                 FROM reviews
-                WHERE $1::integer IS NULL or product = $1::integer
+                WHERE product = $1
                 ORDER BY
                 CASE WHEN (date_part('year', (SELECT current_timestamp)) - EXTRACT(YEAR FROM date) <= 2)
                      THEN helpfulness END DESC,
@@ -58,7 +59,7 @@ exports.getReviewsRelevant = (id, count, page) => {
 exports.getPhotos = (reviewId) => {
   const text = `SELECT id, url
                 FROM reviews_photos
-                WHERE $1::integer IS NULL or review_id = $1::integer`;
+                WHERE review_id = $1`;
   const params = [reviewId];
   return db.query(text, params);
 };
@@ -67,7 +68,7 @@ exports.getPhotos = (reviewId) => {
 exports.getRatings = (id) => {
   const text = `SELECT rating, count(rating)
                 FROM reviews
-                WHERE $1::integer IS NULL or product = $1::integer
+                WHERE product = $1
                 GROUP BY rating`;
   const params = [id];
   return db.query(text, params);
@@ -76,21 +77,63 @@ exports.getRatings = (id) => {
 exports.getRecommended = (id) => {
   const text = `SELECT recommend, count(recommend)
                 FROM reviews
-                WHERE $1::integer IS NULL or product = $1::integer
+                WHERE product = $1
                 GROUP BY recommend`;
   const params = [id];
   return db.query(text, params);
 };
 
-exports.getCharacteristics = (id) => {
-  const text = `SELECT c.id, AVG(cr.value), c.name
-                FROM characteristic_reviews as cr
-                JOIN characteristics as c
-                ON cr.characteristic_id = c.id
-                WHERE $1::integer IS NULL or product_id = $1::integer
-                GROUP BY c.id`;
+exports.getCharacteristics = async (id) => {
+// approach 3:
+  const text1 = `SELECT c.id, c.name
+    FROM characteristics c
+    WHERE product_id = $1`;
   const params = [id];
-  return db.query(text, params);
+  const cIdName = await db.query(text1, params);
+  const arr = cIdName.rows;
+
+  const newArr = await arr.map(async (obj) => {
+    // console.log('obj', obj);
+    const text2 = `SELECT AVG(value) FROM characteristic_reviews WHERE characteristic_id = ${obj.id}`;
+    const result2 = await db.query(text2);
+    const avg = result2.rows[0];
+    // console.log('avg', result2.rows[0]);
+    const newObj = Object.assign(obj, avg);
+    // console.log('updated obj', newObj);
+    return newObj;
+  });
+
+  return Promise.all(newArr).then((bigBox) => bigBox);
+
+  // console.log('arr', newArr);
+  // return newArr;
+
+  // // original:
+  // const text = `SELECT c.id, AVG(cr.value), c.name
+  //               FROM characteristic_reviews as cr
+  //               JOIN characteristics as c
+  //               ON cr.characteristic_id = c.id
+  //               WHERE product_id = $1
+  //               GROUP BY c.id`;
+  // const params = [id];
+  // const result = await db.query(text, params);
+  // console.log('result.rows', result.rows);
+  // return db.query(text, params);
+
+
+
+  // slowest:
+  // ref: https://mode.com/sql-tutorial/sql-performance-tuning/
+  // const text = `SELECT c.name, sub.*
+  //               FROM (
+  //                 SELECT cr.characteristic_id, AVG(cr.value)
+  //                 FROM characteristic_reviews cr
+  //                 GROUP BY cr.characteristic_id
+  //               ) sub
+  //               JOIN characteristics c
+  //               ON sub.characteristic_id = c.id
+  //               WHERE product_id = $1`;
+
 };
 
 exports.postReviews = async (obj) => {
