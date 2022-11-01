@@ -10,9 +10,9 @@ const options = {
       executor: 'constant-arrival-rate',
       rate: 1000, // (required) Number of iterations to start during each timeUnit period.
       timeUnit: '1s', // Number of VUs to pre-allocate before test start to preserve runtime resources. DEFAULT: 1s
-      duration: '10s', // (required) Total scenario duration (excluding gracefulStop).
-      preAllocatedVUs: 1000, // (required) Number of VUs to pre-allocate before test start to preserve runtime resources.
-      maxVUs: 1000, // Maximum number of VUs to allow during the test run. DEFAULT: If unset, same as preAllocatedVUs
+      duration: '60s', // (required) Total scenario duration (excluding gracefulStop).
+      preAllocatedVUs: 50, // (required) Number of VUs to pre-allocate before test start to preserve runtime resources.
+      maxVUs: 100, // Maximum number of VUs to allow during the test run. DEFAULT: If unset, same as preAllocatedVUs
     },
   },
 };
@@ -23,7 +23,7 @@ const options = {
 const getReviews = () => {
   const i = randomIntBetween(900000, 1000000);
   // const i = randomIntBetween(5197536, 5775040);
-  const url = `http://localhost:8000/reviews?product_id=${i}`;
+  const url = `http://localhost:8000/reviews?product_id=${i}&sort=newest`;
   console.log('***url***', url);
   http.get(url);
 };

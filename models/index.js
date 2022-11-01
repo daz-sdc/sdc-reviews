@@ -9,10 +9,63 @@
 // Handles data logic
 // Interacts with database
 const db = require('../db/index');
+// // original version:
+
+// exports.getReviewsHelpful = (id, count, page) => {
+//   const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
+//                 FROM reviews
+//                 WHERE product = $1
+//                 ORDER BY helpfulness DESC
+//                 LIMIT $2
+//                 OFFSET ($3 - 1) * $2`;
+//   const params = [id, count, page];
+//   return db.query(text, params);
+// };
+
+// exports.getReviewsNewest = (id, count, page) => {
+//   const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
+//                 FROM reviews
+//                 WHERE product = $1
+//                 ORDER BY date DESC
+//                 LIMIT $2
+//                 OFFSET ($3 - 1) * $2`;
+//   const params = [id, count, page];
+//   return db.query(text, params);
+// };
+
+// exports.getReviewsRelevant = (id, count, page) => {
+//   const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
+//                 FROM reviews
+//                 WHERE product = $1
+//                 ORDER BY
+//                 CASE WHEN (date_part('year', (SELECT current_timestamp)) - EXTRACT(YEAR FROM date) <= 2)
+//                      THEN helpfulness END DESC,
+//                 CASE WHEN (date_part('year', (SELECT current_timestamp)) - EXTRACT(YEAR FROM date) > 2)
+//                      THEN date END DESC
+//                 LIMIT $2
+//                 OFFSET ($3 - 1) * $2`;
+//   const params = [id, count, page];
+//   return db.query(text, params);
+// };
+
+
+// // using create materialized view and join table:
+// CREATE MATERIALIZED VIEW mv_review_tb
+// AS
+// SELECT r.product, r.review_id, r.rating, r.summary, r.recommend, r.response, r.body, r.date, r.reviewer_name, r.helpfulness, rp.photos
+//                 FROM reviews r
+//                 FULL OUTER JOIN (
+//                                   SELECT review_id, jsonb_agg(jsonb_build_object('id', id, 'url', url)) photos
+//                                   FROM reviews_photos
+//                                   GROUP BY review_id
+//                                 ) rp
+//                 ON r.review_id = rp.review_id
+
+
 
 exports.getReviewsHelpful = (id, count, page) => {
-  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
-                FROM reviews
+  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
+                FROM mv_review_tb
                 WHERE product = $1
                 ORDER BY helpfulness DESC
                 LIMIT $2
@@ -21,9 +74,11 @@ exports.getReviewsHelpful = (id, count, page) => {
   return db.query(text, params);
 };
 
+
+
 exports.getReviewsNewest = (id, count, page) => {
-  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
-                FROM reviews
+  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
+                FROM mv_review_tb
                 WHERE product = $1
                 ORDER BY date DESC
                 LIMIT $2
@@ -33,8 +88,8 @@ exports.getReviewsNewest = (id, count, page) => {
 };
 
 exports.getReviewsRelevant = (id, count, page) => {
-  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
-                FROM reviews
+  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
+                FROM mv_review_tb
                 WHERE product = $1
                 ORDER BY
                 CASE WHEN (date_part('year', (SELECT current_timestamp)) - EXTRACT(YEAR FROM date) <= 2)
@@ -56,13 +111,25 @@ exports.getReviewsRelevant = (id, count, page) => {
 // original:
 // const text = `SELECT r.product, r.rating, r.summary, r.recommend, r.response, r.body, r.date, r.reviewer_name, r.helpfulness, rp.photo_id, rp.url, rp.review_id FROM reviews r JOIN reviews_photos as rp ON r.id = rp.review_id WHERE $1::integer IS NULL or r.product = $1::integer`;
 
-exports.getPhotos = (reviewId) => {
-  const text = `SELECT id, url
-                FROM reviews_photos
-                WHERE review_id = $1`;
-  const params = [reviewId];
-  return db.query(text, params);
-};
+
+// // original:
+// exports.getPhotos = (reviewId) => {
+//   const text = `SELECT id, url
+//                 FROM reviews_photos
+//                 WHERE review_id = $1`;
+//   const params = [reviewId];
+//   return db.query(text, params);
+// };
+
+// // new1:
+// exports.getPhotos = (reviewId) => {
+//   const text = `SELECT jsonb_agg(jsonb_build_object('id', id, 'url', url)) photos
+//                 FROM reviews_photos
+//                 WHERE review_id = $1
+//                 GROUP BY review_id`;
+//   const params = [reviewId];
+//   return db.query(text, params);
+// };
 
 // Meta:
 exports.getRatings = (id) => {
@@ -84,7 +151,7 @@ exports.getRecommended = (id) => {
 };
 
 exports.getCharacteristics = async (id) => {
-// approach 3:
+// approach 3 (failed):
   const text1 = `SELECT c.id, c.name
     FROM characteristics c
     WHERE product_id = $1`;

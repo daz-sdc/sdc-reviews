@@ -35,14 +35,16 @@ exports.getReviews = async (req, res) => {
     reviews = await models.getReviewsRelevant(productId, count, page);
   }
   // console.log('reviews!!!', reviews.rows);
-  const arr = reviews.rows.map(async (review) => {
-    const photos = await models.getPhotos(review.review_id);
-    review.photos = photos.rows;
-    return review;
-  });
+  // const arr = reviews.rows.map(async (review) => {
+  //   const photos = await models.getPhotos(review.review_id);
+  //   review.photos = photos.rows;
+  //   return review;
+  // });
+
+
 
   // Promise.All(arr) // this returns a promise, unwrap each box in the big box
-  Promise.all(arr).then((bigBox) => {
+  Promise.all(reviews.rows).then((bigBox) => {
     // console.log('FINAL ARRAY', bigBox);
     // res.send(bigBox);
     output.results = bigBox;
@@ -50,7 +52,6 @@ exports.getReviews = async (req, res) => {
     res.send(output);
   });
 };
-
 
 
 
