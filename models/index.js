@@ -63,17 +63,16 @@ const db = require('../db/index');
 
 
 
-exports.getReviewsHelpful = (id, count, page) => {
-  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
-                FROM mv_review_tb
-                WHERE product = $1
-                ORDER BY helpfulness DESC
-                LIMIT $2
-                OFFSET ($3 - 1) * $2`;
-  const params = [id, count, page];
-  return db.query(text, params);
-};
-
+// exports.getReviewsHelpful = (id, count, page) => {
+//   const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
+//                 FROM mv_review_tb
+//                 WHERE product = $1
+//                 ORDER BY helpfulness DESC
+//                 LIMIT $2
+//                 OFFSET ($3 - 1) * $2`;
+//   const params = [id, count, page];
+//   return db.query(text, params);
+// };
 
 
 exports.getReviewsNewest = (id, count, page) => {
@@ -141,6 +140,16 @@ exports.getRatings = (id) => {
   return db.query(text, params);
 };
 
+// // ref: https://stackoverflow.com/questions/43453685/json-agg-two-columns-in-postgres
+// select json_object_agg(rating, cnt1)
+// from (
+// select rating, count(rating) cnt1
+// from reviews
+// where product = 71702
+// group by 1
+// ) s1;
+
+
 exports.getRecommended = (id) => {
   const text = `SELECT recommend, count(recommend)
                 FROM reviews
@@ -150,8 +159,16 @@ exports.getRecommended = (id) => {
   return db.query(text, params);
 };
 
+// select json_object_agg(recommend, cnt2)
+// from (
+//   select recommend, count(recommend) cnt2
+//   from reviews
+//   where product = 71702
+//   group by 1
+// ) s2;
+
 exports.getCharacteristics = async (id) => {
-// approach 3 (failed):
+// approach 3:
   const text1 = `SELECT c.id, c.name
     FROM characteristics c
     WHERE product_id = $1`;

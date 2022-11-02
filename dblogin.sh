@@ -1,0 +1,1 @@
+ssh -i "pasta.pem" ec2-user@ec2-34-218-227-125.us-west-2.compute.amazonaws.com

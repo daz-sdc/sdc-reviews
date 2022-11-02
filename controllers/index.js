@@ -67,6 +67,7 @@ exports.getReviewsMeta = async (req, res) => {
 
   const arrOfRatings = await models.getRatings(productId);
   const objOfRatings = {};
+  console.log('arrOfRatings.rows', arrOfRatings.rows);
   arrOfRatings.rows.forEach((rating) => {
     const valsOfRating = Object.values(rating);
     objOfRatings[valsOfRating[0].toString()] = valsOfRating[1];
