@@ -1,3 +1,4 @@
+/* eslint-disable no-tabs */
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-console */
 /* eslint-disable no-unreachable */
@@ -63,16 +64,16 @@ const db = require('../db/index');
 
 
 
-// exports.getReviewsHelpful = (id, count, page) => {
-//   const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
-//                 FROM mv_review_tb
-//                 WHERE product = $1
-//                 ORDER BY helpfulness DESC
-//                 LIMIT $2
-//                 OFFSET ($3 - 1) * $2`;
-//   const params = [id, count, page];
-//   return db.query(text, params);
-// };
+exports.getReviewsHelpful = (id, count, page) => {
+  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
+                FROM mv_review_tb
+                WHERE product = $1
+                ORDER BY helpfulness DESC
+                LIMIT $2
+                OFFSET ($3 - 1) * $2`;
+  const params = [id, count, page];
+  return db.query(text, params);
+};
 
 
 exports.getReviewsNewest = (id, count, page) => {
@@ -130,15 +131,108 @@ exports.getReviewsRelevant = (id, count, page) => {
 //   return db.query(text, params);
 // };
 
-// Meta:
-exports.getRatings = (id) => {
-  const text = `SELECT rating, count(rating)
-                FROM reviews
-                WHERE product = $1
-                GROUP BY rating`;
+
+
+// // Meta:
+// // mew method:
+
+// // //: STEP1-create materialized tb:
+
+// CREATE MATERIALIZED VIEW mv_reviews_meta_tb
+// 		AS
+// 		SELECT s11.product, s11.ratings, s22.recommended, s5.characteristics
+// 		FROM (
+//   			select json_object_agg(rating, cnt1) as ratings, product
+//   			from (
+//   				select rating, count(rating) cnt1, product
+//   				from reviews
+//   				group by 1, 3
+// 		  	) s1
+// 			where s1.product IS NOT NULL
+// 			group by s1.product
+//         ) s11
+// 		FULL OUTER JOIN (
+//   				select json_object_agg(recommend, cnt2) as recommended, product
+//   				from (
+//   					select recommend, count(recommend) cnt2, product
+//     				from reviews
+//     				group by 1, 3
+// 				) s2
+// 			where s2.product IS NOT NULL
+// 			group by s2.product
+// 		 ) s22
+// 		ON s11.product = s22.product
+// 		FULL OUTER JOIN (
+// 				select json_object_agg(s4.name, s4.obj) as characteristics, s4.product_id
+//   				from (
+//     				select s3.name, json_build_object('id', s3.id, 'value', s3.avg) obj, s3.product_id
+//     				from (
+//     					select c.name, c.id, AVG(cr.value) avg, product_id
+//     					from characteristic_reviews cr
+//     					join characteristics c
+//     					on cr.characteristic_id = c.id
+//     					group by 2, 4
+//     				) s3
+// 					group by 1, s3.id, s3.avg, 3
+// 					order by 3
+//                  ) s4
+// 			    where s4.product_id IS NOT NULL
+// 			    group by 2
+// 			) s5
+// 		ON COALESCE(s11.product, s22.product) = s5.product_id
+
+
+// // // STEP2:
+exports.getReviewsMeta = (id) => {
+  const text = 'SELECT ratings, recommended, characteristics FROM mv_reviews_meta_tb WHERE product_id = $1';
   const params = [id];
   return db.query(text, params);
 };
+
+
+
+// // previous method:
+// exports.getRatings = (id) => {
+//   const text = `SELECT rating, count(rating)
+//                 FROM reviews
+//                 WHERE product = $1
+//                 GROUP BY rating`;
+//   const params = [id];
+//   return db.query(text, params);
+// };
+
+
+// exports.getRecommended = (id) => {
+//   const text = `SELECT recommend, count(recommend)
+//                 FROM reviews
+//                 WHERE product = $1
+//                 GROUP BY recommend`;
+//   const params = [id];
+//   return db.query(text, params);
+// };
+
+
+// exports.getCharacteristics = async (id) => {
+// // approach 3:
+//   const text1 = `SELECT c.id, c.name
+//     FROM characteristics c
+//     WHERE product_id = $1`;
+//   const params = [id];
+//   const cIdName = await db.query(text1, params);
+//   const arr = cIdName.rows;
+
+//   const newArr = await arr.map(async (obj) => {
+//     // console.log('obj', obj);
+//     const text2 = `SELECT AVG(value) FROM characteristic_reviews WHERE characteristic_id = ${obj.id}`;
+//     const result2 = await db.query(text2);
+//     const avg = result2.rows[0];
+//     // console.log('avg', result2.rows[0]);
+//     const newObj = Object.assign(obj, avg);
+//     // console.log('updated obj', newObj);
+//     return newObj;
+//   });
+
+//   return Promise.all(newArr).then((bigBox) => bigBox);
 
 // // ref: https://stackoverflow.com/questions/43453685/json-agg-two-columns-in-postgres
 // select json_object_agg(rating, cnt1)
@@ -149,16 +243,6 @@ exports.getRatings = (id) => {
 // group by 1
 // ) s1;
 
-
-exports.getRecommended = (id) => {
-  const text = `SELECT recommend, count(recommend)
-                FROM reviews
-                WHERE product = $1
-                GROUP BY recommend`;
-  const params = [id];
-  return db.query(text, params);
-};
-
 // select json_object_agg(recommend, cnt2)
 // from (
 //   select recommend, count(recommend) cnt2
@@ -167,58 +251,50 @@ exports.getRecommended = (id) => {
 //   group by 1
 // ) s2;
 
-exports.getCharacteristics = async (id) => {
-// approach 3:
-  const text1 = `SELECT c.id, c.name
-    FROM characteristics c
-    WHERE product_id = $1`;
-  const params = [id];
-  const cIdName = await db.query(text1, params);
-  const arr = cIdName.rows;
+// select json_object_agg(s4.name, s4.obj) characteristics
+// from (
+//   select s3.name, json_build_object('id', s3.id, 'value', s3.avg) obj
+//   from (
+//   select c.name, c.id, AVG(cr.value) avg
+//   from characteristic_reviews cr
+//   join characteristics c
+//   on cr.characteristic_id = c.id
+//   where product_id = 99910
+//   group by 2
+//   ) s3
+// ) s4
 
-  const newArr = await arr.map(async (obj) => {
-    // console.log('obj', obj);
-    const text2 = `SELECT AVG(value) FROM characteristic_reviews WHERE characteristic_id = ${obj.id}`;
-    const result2 = await db.query(text2);
-    const avg = result2.rows[0];
-    // console.log('avg', result2.rows[0]);
-    const newObj = Object.assign(obj, avg);
-    // console.log('updated obj', newObj);
-    return newObj;
-  });
 
-  return Promise.all(newArr).then((bigBox) => bigBox);
+// console.log('arr', newArr);
+// return newArr;
 
-  // console.log('arr', newArr);
-  // return newArr;
-
-  // // original:
-  // const text = `SELECT c.id, AVG(cr.value), c.name
-  //               FROM characteristic_reviews as cr
-  //               JOIN characteristics as c
-  //               ON cr.characteristic_id = c.id
-  //               WHERE product_id = $1
-  //               GROUP BY c.id`;
-  // const params = [id];
-  // const result = await db.query(text, params);
-  // console.log('result.rows', result.rows);
-  // return db.query(text, params);
+// // original:
+// const text = `SELECT c.id, AVG(cr.value), c.name
+//               FROM characteristic_reviews as cr
+//               JOIN characteristics as c
+//               ON cr.characteristic_id = c.id
+//               WHERE product_id = $1
+//               GROUP BY c.id`;
+// const params = [id];
+// const result = await db.query(text, params);
+// console.log('result.rows', result.rows);
+// return db.query(text, params);
 
 
 
-  // slowest:
-  // ref: https://mode.com/sql-tutorial/sql-performance-tuning/
-  // const text = `SELECT c.name, sub.*
-  //               FROM (
-  //                 SELECT cr.characteristic_id, AVG(cr.value)
-  //                 FROM characteristic_reviews cr
-  //                 GROUP BY cr.characteristic_id
-  //               ) sub
-  //               JOIN characteristics c
-  //               ON sub.characteristic_id = c.id
-  //               WHERE product_id = $1`;
+// slowest:
+// ref: https://mode.com/sql-tutorial/sql-performance-tuning/
+// const text = `SELECT c.name, sub.*
+//               FROM (
+//                 SELECT cr.characteristic_id, AVG(cr.value)
+//                 FROM characteristic_reviews cr
+//                 GROUP BY cr.characteristic_id
+//               ) sub
+//               JOIN characteristics c
+//               ON sub.characteristic_id = c.id
+//               WHERE product_id = $1`;
 
-};
+// };
 
 exports.postReviews = async (obj) => {
   // const datetime = new Date(Date.now()).toISOString();

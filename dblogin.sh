@@ -1,1 +1,1 @@
-ssh -i "pasta.pem" ec2-user@ec2-34-218-227-125.us-west-2.compute.amazonaws.com
+ssh -i "sdc-pasta-db-v2.pem" ubuntu@ec2-34-222-19-196.us-west-2.compute.amazonaws.com

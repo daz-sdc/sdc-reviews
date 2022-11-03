@@ -11,8 +11,8 @@ const options = {
       rate: 1000, // (required) Number of iterations to start during each timeUnit period.
       timeUnit: '1s', // Number of VUs to pre-allocate before test start to preserve runtime resources. DEFAULT: 1s
       duration: '60s', // (required) Total scenario duration (excluding gracefulStop).
-      preAllocatedVUs: 50, // (required) Number of VUs to pre-allocate before test start to preserve runtime resources.
-      maxVUs: 100, // Maximum number of VUs to allow during the test run. DEFAULT: If unset, same as preAllocatedVUs
+      preAllocatedVUs: 210, // (required) Number of VUs to pre-allocate before test start to preserve runtime resources.
+      maxVUs: 230, // Maximum number of VUs to allow during the test run. DEFAULT: If unset, same as preAllocatedVUs
     },
   },
 };

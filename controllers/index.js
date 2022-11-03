@@ -55,71 +55,82 @@ exports.getReviews = async (req, res) => {
 
 
 
-
-
-// promise.all
-// newrelic npm
+// // // NEW VERSION:
 exports.getReviewsMeta = async (req, res) => {
   const productId = req.query.product_id;
+  const arr = await models.getReviewsMeta(productId);
   const output = {
     product_id: productId,
   };
-
-  const arrOfRatings = await models.getRatings(productId);
-  const objOfRatings = {};
-  console.log('arrOfRatings.rows', arrOfRatings.rows);
-  arrOfRatings.rows.forEach((rating) => {
-    const valsOfRating = Object.values(rating);
-    objOfRatings[valsOfRating[0].toString()] = valsOfRating[1];
-  });
-
-  const arrOfRecommended = await models.getRecommended(productId);
-  const objOfRecommended = {};
-  arrOfRecommended.rows.forEach((recommend) => {
-    const valsOfRecommend = Object.values(recommend);
-    objOfRecommended[valsOfRecommend[0].toString()] = valsOfRecommend[1];
-  });
-
-  const arrOfCharacteristics = await models.getCharacteristics(productId);
-  const objOfCharacteristics = {};
-  arrOfCharacteristics.forEach(async (obj) => {
-    // console.log('~~~EACH~~~', obj);
-    objOfCharacteristics[obj.name] = {
-      id: obj.id,
-      value: obj.avg,
-    };
-  });
-  // arrOfCharacteristics
-  // .then((res) => {
-  //   console.log('res of arrofCharacteristics', res);
-  //   res.forEach((obj) => {
-  //     objOfCharacteristics[obj.name] = {
-  //       id: obj.id,
-  //       value: obj.avg,
-  //     };
-  //   });
-  //   console.log('***objOfCharacteristics***', objOfCharacteristics);
-  // })
-  // .catch((err) => {
-  //   console.log('err of arrofCharacteristics', err);
-  // });
-
-
-  // const objOfCharacteristics = {};
-  // arrOfCharacteristics.rows.forEach((char) => {
-  //   const valsOfChar = Object.values(char);
-  //   objOfCharacteristics[valsOfChar[2]] = {
-  //     id: valsOfChar[0],
-  //     value: valsOfChar[1],
-  //   };
-  // });
-
-  output.ratings = objOfRatings;
-  output.recommended = objOfRecommended;
-  output.characteristics = objOfCharacteristics;
-  // console.log('output', output);
+  Object.assign(output, arr.rows[0]);
   res.send(output);
 };
+
+
+// // // PREVIOUS VERSION:
+// // promise.all
+// // newrelic npm
+// exports.getReviewsMeta = async (req, res) => {
+//   const productId = req.query.product_id;
+//   const output = {
+//     product_id: productId,
+//   };
+
+//   const arrOfRatings = await models.getRatings(productId);
+//   const objOfRatings = {};
+//   console.log('arrOfRatings.rows', arrOfRatings.rows);
+//   arrOfRatings.rows.forEach((rating) => {
+//     const valsOfRating = Object.values(rating);
+//     objOfRatings[valsOfRating[0].toString()] = valsOfRating[1];
+//   });
+
+//   const arrOfRecommended = await models.getRecommended(productId);
+//   const objOfRecommended = {};
+//   arrOfRecommended.rows.forEach((recommend) => {
+//     const valsOfRecommend = Object.values(recommend);
+//     objOfRecommended[valsOfRecommend[0].toString()] = valsOfRecommend[1];
+//   });
+
+//   const arrOfCharacteristics = await models.getCharacteristics(productId);
+//   const objOfCharacteristics = {};
+//   arrOfCharacteristics.forEach(async (obj) => {
+//     // console.log('~~~EACH~~~', obj);
+//     objOfCharacteristics[obj.name] = {
+//       id: obj.id,
+//       value: obj.avg,
+//     };
+//   });
+//   // arrOfCharacteristics
+//   // .then((res) => {
+//   //   console.log('res of arrofCharacteristics', res);
+//   //   res.forEach((obj) => {
+//   //     objOfCharacteristics[obj.name] = {
+//   //       id: obj.id,
+//   //       value: obj.avg,
+//   //     };
+//   //   });
+//   //   console.log('***objOfCharacteristics***', objOfCharacteristics);
+//   // })
+//   // .catch((err) => {
+//   //   console.log('err of arrofCharacteristics', err);
+//   // });
+
+
+//   // const objOfCharacteristics = {};
+//   // arrOfCharacteristics.rows.forEach((char) => {
+//   //   const valsOfChar = Object.values(char);
+//   //   objOfCharacteristics[valsOfChar[2]] = {
+//   //     id: valsOfChar[0],
+//   //     value: valsOfChar[1],
+//   //   };
+//   // });
+
+//   output.ratings = objOfRatings;
+//   output.recommended = objOfRecommended;
+//   output.characteristics = objOfCharacteristics;
+//   // console.log('output', output);
+//   res.send(output);
+// };
 
 exports.postReviews = (req, res) => {
   // console.log('POST******postReviews******requestBody', req.body);
