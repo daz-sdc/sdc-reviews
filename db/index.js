@@ -47,11 +47,14 @@ const { Pool } = require('pg');
 
 const pool = new Pool({
   user: 'postgres',
+  // host: '34.222.19.196',
   host: 'localhost',
   database: 'hello123',
   password: 'sdn1993',
   port: 5432,
 });
+
+// `${encodeURIComponent('sdn1993')}@`
 
 module.exports = {
   async query(text, params) {
