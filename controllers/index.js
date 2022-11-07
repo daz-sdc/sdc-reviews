@@ -16,7 +16,7 @@ require("dotenv").config();
 const loader = process.env.LOADER;
 
 exports.getLoaderToken = (req, res) => {
-  res.status(200).send(`${loader}`);
+  res.status(200).send(loader);
 };
 
 exports.getReviews = async (req, res) => {
