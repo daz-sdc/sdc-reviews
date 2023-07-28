@@ -1,7 +1,6 @@
-/* eslint-disable import/newline-after-import */
-/* eslint-disable no-unused-vars */
-const express = require('express');
 require('dotenv').config();
+const express = require('express');
+
 const loader = process.env.LOADER;
 const router = express.Router();
 const {

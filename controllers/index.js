@@ -1,4 +1,4 @@
-const models = require('../models/index');
+const models = require('../models');
 require('dotenv').config();
 
 const loader = process.env.LOADER;
