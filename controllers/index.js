@@ -1,5 +1,3 @@
-// Handles request flow
-// Never handles data logic
 const models = require('../models/index');
 require('dotenv').config();
 

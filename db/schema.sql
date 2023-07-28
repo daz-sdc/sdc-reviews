@@ -1,11 +1,4 @@
 -- ---
--- Globals
--- ---
-
--- SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
--- SET FOREIGN_KEY_CHECKS=0;
-
--- ---
 -- Table 'Reviews'
 --
 -- ---
@@ -65,7 +58,7 @@ CREATE TABLE characteristic_reviews (
 DROP TABLE IF EXISTS reviews_photos;
 
 CREATE TABLE reviews_photos (
-  photo_id SERIAL UNIQUE,
+  id SERIAL UNIQUE,
   review_id INTEGER NULL DEFAULT NULL,
   url VARCHAR NULL DEFAULT NULL,
   PRIMARY KEY (id)
@@ -78,25 +71,3 @@ CREATE TABLE reviews_photos (
 ALTER TABLE characteristic_reviews ADD FOREIGN KEY (characteristic_id) REFERENCES characteristics (id);
 ALTER TABLE characteristic_reviews ADD FOREIGN KEY (review_id) REFERENCES reviews (id);
 ALTER TABLE reviews_photos ADD FOREIGN KEY (review_id) REFERENCES reviews (id);
-
--- ---
--- Table Properties
--- ---
-
--- ALTER TABLE `Reviews` ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
--- ALTER TABLE `Characteristics` ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
--- ALTER TABLE `Characteristic_reviews` ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
--- ALTER TABLE `Reviews_photos` ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-
--- ---
--- Test Data
--- ---
-
--- INSERT INTO `Reviews` (`id`,`product_id`,`rating`,`date`,`summary`,`body`,`recommend`,`reported`,`reviewer_name`,`reveiwer_email`,`response`,`helpfulness`) VALUES
--- ('','','','','','','','','','','','');
--- INSERT INTO `Characteristics` (`id`,`product_id`,`name`) VALUES
--- ('','','');
--- INSERT INTO `Characteristic_reviews` (`id`,`characteristic_id`,`review_id`,`value`) VALUES
--- ('','','','');
--- INSERT INTO `Reviews_photos` (`id`,`review_id`,`url`) VALUES
--- ('','','');

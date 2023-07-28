@@ -1,20 +1,23 @@
 require('dotenv').config();
 
-const pgpassword = process.env.PGPASSWORD;
-
 const { Pool } = require('pg');
 
+const {
+  PGHOST,
+  PGUSER,
+  PGPASSWORD,
+  PGPORT,
+  PGDATABASE,
+} = process.env;
+
 const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'hello123',
-  password: pgpassword,
-  port: 5432,
+  host: PGHOST,
+  user: PGUSER,
+  password: PGPASSWORD,
+  port: PGPORT,
+  database: PGDATABASE,
 });
 
 module.exports = {
-  async query(text, params) {
-    const res = await pool.query(text, params);
-    return res;
-  },
+  query: (text, params) => pool.query(text, params),
 };

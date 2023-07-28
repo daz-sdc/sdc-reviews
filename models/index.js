@@ -9,7 +9,7 @@
 /* eslint-disable no-unused-vars */
 // Handles data logic
 // Interacts with database
-const db = require('../db/index');
+const db = require('../db');
 // // original version:
 
 // exports.getReviewsHelpful = (id, count, page) => {
