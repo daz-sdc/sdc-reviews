@@ -1,53 +1,38 @@
-/* eslint-disable no-tabs */
-/* eslint-disable no-param-reassign */
-/* eslint-disable no-console */
-/* eslint-disable no-unreachable */
-/* eslint-disable no-multiple-empty-lines */
-/* eslint-disable padded-blocks */
-/* eslint-disable no-trailing-spaces */
-/* eslint-disable max-len */
-/* eslint-disable no-unused-vars */
-// Handles data logic
-// Interacts with database
 const db = require('../db');
 // // original version:
 
-// exports.getReviewsHelpful = (id, count, page) => {
-//   const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
-//                 FROM reviews
-//                 WHERE product = $1
-//                 ORDER BY helpfulness DESC
-//                 LIMIT $2
-//                 OFFSET ($3 - 1) * $2`;
-//   const params = [id, count, page];
-//   return db.query(text, params);
-// };
+exports.getReviewsHelpful = (id, count, page) => {
+  const text = `SELECT id, rating, summary, recommend, response, body, to_char(to_timestamp(date/1000), 'yyyy-mm-ddT00:00:00.000Z') as date, reviewer_name, helpfulness
+                FROM reviews
+                WHERE product_id = $1
+                ORDER BY helpfulness DESC
+                LIMIT $2
+                OFFSET ($3 - 1) * $2`;
+  const params = [id, count, page];
+  return db.query(text, params);
+};
 
-// exports.getReviewsNewest = (id, count, page) => {
-//   const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
-//                 FROM reviews
-//                 WHERE product = $1
-//                 ORDER BY date DESC
-//                 LIMIT $2
-//                 OFFSET ($3 - 1) * $2`;
-//   const params = [id, count, page];
-//   return db.query(text, params);
-// };
+exports.getReviewsNewest = (id, count, page) => {
+  const text = `SELECT id, rating, summary, recommend, response, body, to_char(to_timestamp(date/1000), 'yyyy-mm-ddT00:00:00.000Z') as date, reviewer_name, helpfulness
+                FROM reviews
+                WHERE product_id = $1
+                ORDER BY to_char(to_timestamp(date/1000), 'yyyy-mm-ddT00:00:00.000Z') DESC
+                LIMIT $2
+                OFFSET ($3 - 1) * $2`;
+  const params = [id, count, page];
+  return db.query(text, params);
+};
 
-// exports.getReviewsRelevant = (id, count, page) => {
-//   const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
-//                 FROM reviews
-//                 WHERE product = $1
-//                 ORDER BY
-//                 CASE WHEN (date_part('year', (SELECT current_timestamp)) - EXTRACT(YEAR FROM date) <= 2)
-//                      THEN helpfulness END DESC,
-//                 CASE WHEN (date_part('year', (SELECT current_timestamp)) - EXTRACT(YEAR FROM date) > 2)
-//                      THEN date END DESC
-//                 LIMIT $2
-//                 OFFSET ($3 - 1) * $2`;
-//   const params = [id, count, page];
-//   return db.query(text, params);
-// };
+exports.getReviewsRelevant = (id, count, page) => {
+  const text = `SELECT id, rating, summary, recommend, response, body, to_char(to_timestamp(date/1000), 'yyyy-mm-ddT00:00:00.000Z') as date, reviewer_name, helpfulness
+                FROM reviews
+                WHERE product_id = $1
+                ORDER BY
+                (0.5 * helpfulness) + (0.5 * to_char(to_timestamp(date/1000), 'yyyy-mm-ddT00:00:00.000Z')) DESC
+                OFFSET ($3 - 1) * $2`;
+  const params = [id, count, page];
+  return db.query(text, params);
+};
 
 
 // // using create materialized view and join table:
@@ -62,45 +47,43 @@ const db = require('../db');
 //                                 ) rp
 //                 ON r.review_id = rp.review_id
 
+// exports.getReviewsHelpful = (id, count, page) => {
+//   const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
+//                 FROM mv_review_tb
+//                 WHERE product = $1
+//                 ORDER BY helpfulness DESC
+//                 LIMIT $2
+//                 OFFSET ($3 - 1) * $2`;
+//   const params = [id, count, page];
+//   return db.query(text, params);
+// };
 
 
-exports.getReviewsHelpful = (id, count, page) => {
-  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
-                FROM mv_review_tb
-                WHERE product = $1
-                ORDER BY helpfulness DESC
-                LIMIT $2
-                OFFSET ($3 - 1) * $2`;
-  const params = [id, count, page];
-  return db.query(text, params);
-};
+// exports.getReviewsNewest = (id, count, page) => {
+//   const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
+//                 FROM mv_review_tb
+//                 WHERE product = $1
+//                 ORDER BY date DESC
+//                 LIMIT $2
+//                 OFFSET ($3 - 1) * $2`;
+//   const params = [id, count, page];
+//   return db.query(text, params);
+// };
 
-
-exports.getReviewsNewest = (id, count, page) => {
-  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
-                FROM mv_review_tb
-                WHERE product = $1
-                ORDER BY date DESC
-                LIMIT $2
-                OFFSET ($3 - 1) * $2`;
-  const params = [id, count, page];
-  return db.query(text, params);
-};
-
-exports.getReviewsRelevant = (id, count, page) => {
-  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
-                FROM mv_review_tb
-                WHERE product = $1
-                ORDER BY
-                CASE WHEN (date_part('year', (SELECT current_timestamp)) - EXTRACT(YEAR FROM date) <= 2)
-                     THEN helpfulness END DESC,
-                CASE WHEN (date_part('year', (SELECT current_timestamp)) - EXTRACT(YEAR FROM date) > 2)
-                     THEN date END DESC
-                LIMIT $2
-                OFFSET ($3 - 1) * $2`;
-  const params = [id, count, page];
-  return db.query(text, params);
-};
+// exports.getReviewsRelevant = (id, count, page) => {
+//   const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
+//                 FROM mv_review_tb
+//                 WHERE product = $1
+//                 ORDER BY
+//                 CASE WHEN (date_part('year', (SELECT current_timestamp)) - EXTRACT(YEAR FROM date) <= 2)
+//                      THEN helpfulness END DESC,
+//                 CASE WHEN (date_part('year', (SELECT current_timestamp)) - EXTRACT(YEAR FROM date) > 2)
+//                      THEN date END DESC
+//                 LIMIT $2
+//                 OFFSET ($3 - 1) * $2`;
+//   const params = [id, count, page];
+//   return db.query(text, params);
+// };
 
 // test1:
 // const text = `SELECT r.product, r.helpfulness, rp.photo_id, rp.url, rp.review_id FROM reviews as r JOIN reviews_photos as rp ON r.id = rp.review_id WHERE $1 IS NULL or r.product = $1`;

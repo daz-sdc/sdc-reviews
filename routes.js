@@ -10,12 +10,11 @@ const {
   putReviewsHelpfulness,
   putReviewsReport,
   getLoaderToken,
-} = require('./controllers/index');
+} = require('./controllers');
 
 router.route('/reviews').get(getReviews);
 router.route('/reviews/meta').get(getReviewsMeta);
 router.route('/reviews').post(postReviews);
-// router.post('/reviews', postReviews);
 router.route('/reviews/:review_id/helpful').put(putReviewsHelpfulness);
 router.route('/reviews/:review_id/report').put(putReviewsReport);
 router.route(`/${loader}`).get(getLoaderToken);

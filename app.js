@@ -1,13 +1,13 @@
 const express = require('express');
-const routes = require('./routes');
 
 const app = express();
+const router = require('./routes');
 
 app.use(express.json());
-app.use(routes);
+app.use(router);
 
 app.get('/', (req, res) => {
-  res.status(200).send('Ratings & Reviews SDC!');
+  res.status(200).send('System Design Project: Ratings & Reviews API!');
 });
 
 module.exports = app;
