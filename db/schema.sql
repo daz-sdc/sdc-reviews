@@ -52,3 +52,8 @@ CREATE TABLE reviews_photos (
       REFERENCES reviews (id)
 );
 
+
+ALTER TABLE reviews
+    ALTER COLUMN date TYPE timestamp with time ZONE
+    USING
+         timestamp with time zone 'epoch' + date * interval '1 millisecond';
