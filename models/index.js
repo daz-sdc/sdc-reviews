@@ -2,7 +2,7 @@ const db = require('../db');
 // // original version:
 
 exports.getReviewsHelpful = (id, count, page) => {
-  const text = `SELECT id, rating, summary, recommend, response, body, TO_CHAR(TO_TIMESTAMP(date/1000.0), 'YYYY-MM-DDThh:mm:ss.MSZ') as date, reviewer_name, helpfulness
+  const text = `SELECT id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
                 FROM reviews
                 WHERE product_id = $1
                 ORDER BY helpfulness DESC
@@ -13,10 +13,10 @@ exports.getReviewsHelpful = (id, count, page) => {
 };
 
 exports.getReviewsNewest = (id, count, page) => {
-  const text = `SELECT id, rating, summary, recommend, response, body, TO_CHAR(TO_TIMESTAMP(date/1000.0), 'YYYY-MM-DDThh:mm:ss.MSZ') as date, reviewer_name, helpfulness
+  const text = `SELECT id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
                 FROM reviews
                 WHERE product_id = $1
-                ORDER BY TO_CHAR(TO_TIMESTAMP(date/1000.0), 'YYYY-MM-DDThh:mm:ss.MSZ') DESC
+                ORDER BY date DESC
                 LIMIT $2
                 OFFSET ($3 - 1) * $2`;
   const params = [id, count, page];
@@ -24,10 +24,10 @@ exports.getReviewsNewest = (id, count, page) => {
 };
 
 exports.getReviewsRelevant = (id, count, page) => {
-  const text = `SELECT id, rating, summary, recommend, response, body, TO_CHAR(TO_TIMESTAMP(date/1000.0), 'YYYY-MM-DDThh:mm:ss.MSZ') as date, reviewer_name, helpfulness
+  const text = `SELECT id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
                 FROM
                   (SELECT * FROM reviews
-                   ORDER BY 0.5 * helpfulness + 0.5 * TO_CHAR(TO_TIMESTAMP(date/1000.0), 'YYYY-MM-DDThh:mm:ss.MSZ') DESC)
+                   ORDER BY 0.5 * helpfulness + 0.5 * date DESC)
                 WHERE product_id = $1
                 OFFSET ($3 - 1) * $2`;
   const params = [id, count, page];
