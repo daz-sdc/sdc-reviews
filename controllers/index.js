@@ -11,22 +11,18 @@ exports.getReviews = async function getReviews(req, res) {
   const page = Number(req.query.page) || 1;
   const count = Number(req.query.count) || 5;
   const sort = (!['newest', 'helpful', 'relevant'].includes(req.query.sort)) ? 'relevant' : req.query.sort;
-  const productId = req.query.product_id;
-  const output = {
-    product: productId,
-    page,
-    count,
-  };
+  const product = req.query.product_id;
+  const output = { product, page, count };
 
   let reviews;
 
   try {
     if (sort === 'helpful') {
-      reviews = await models.getReviewsHelpful(productId, count, page);
+      reviews = await models.getReviewsHelpful(product, count, page);
     } else if (sort === 'newest') {
-      reviews = await models.getReviewsNewest(productId, count, page);
+      reviews = await models.getReviewsNewest(product, count, page);
     } else {
-      reviews = await models.getReviewsRelevant(productId, count, page);
+      reviews = await models.getReviewsRelevant(product, count, page);
     }
 
     Promise.all(reviews.rows).then((bigBox) => {

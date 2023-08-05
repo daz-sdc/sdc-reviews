@@ -54,6 +54,41 @@ CREATE TABLE reviews_photos (
 
 
 ALTER TABLE reviews
-    ALTER COLUMN date TYPE timestamp with time ZONE
+    ALTER COLUMN date TYPE timestamp with time zone
     USING
          timestamp with time zone 'epoch' + date * interval '1 millisecond';
+
+ALTER TABLE reviews
+    ADD COLUMN percentage_helpfulness NUMERIC;
+
+
+
+-- experimental queries:
+
+SELECT CAST(helpfulness as decimal)/(max(helpfulness) over (PARTITION BY product_id)) FROM reviews WHERE product_id = 20;
+
+do $$
+BEGIN
+  for index in 1..(SELECT COUNT(*) FROM reviews) loop
+  INSERT INTO reviews(percentage_helpfulness) VALUES
+  (SELECT CAST(helpfulness as decimal)/(max(helpfulness) over (PARTITION BY product_id)) FROM reviews WHERE reviews.id = index);
+  END LOOP;
+END; $$
+
+
+REF: https://stackoverflow.com/questions/4448340/postgresql-duplicate-key-violates-unique-constraint#:~:text=13%20Answers
+s1. SELECT MAX(id) FROM reviews;
+s2. SELECT nextval('reviews_id_seq');
+s3. SELECT setval('reviews_id_seq', (SELECT MAX(id) FROM reviews)+1);
+s4.
+DO
+$do$
+BEGIN
+  for index in 1..(SELECT COUNT(*) FROM reviews) loop
+  INSERT INTO reviews (percentage_helpfulness) VALUES (0.6897);
+  END LOOP;
+END;
+$do$;
+
+Before doing s4, there were 5774952 rows
+After that, there are 11549906 rows, and testing number 0.6897 could only inserted into 5774953-11549906 rows
