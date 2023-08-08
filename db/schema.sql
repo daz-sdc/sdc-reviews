@@ -52,6 +52,7 @@ CREATE TABLE reviews_photos (
       REFERENCES reviews (id)
 );
 
+-- after inserting data into tables:
 
 ALTER TABLE reviews
     ALTER COLUMN date TYPE timestamp with time zone
@@ -59,36 +60,60 @@ ALTER TABLE reviews
          timestamp with time zone 'epoch' + date * interval '1 millisecond';
 
 ALTER TABLE reviews
-    ADD COLUMN percentage_helpfulness NUMERIC;
+    ADD COLUMN rank_helpfulness BIGINT,
+    ADD COLUMN rank_date BIGINT,
+    ADD COLUMN relevance BIGINT;
 
-
-
--- experimental queries:
-
-SELECT CAST(helpfulness as decimal)/(max(helpfulness) over (PARTITION BY product_id)) FROM reviews WHERE product_id = 20;
+-- -- experimental queries:
 
 do $$
 BEGIN
-  for index in 1..(SELECT COUNT(*) FROM reviews) loop
-  INSERT INTO reviews(percentage_helpfulness) VALUES
-  (SELECT CAST(helpfulness as decimal)/(max(helpfulness) over (PARTITION BY product_id)) FROM reviews WHERE reviews.id = index);
+  FOR review_id in 1..(SELECT COUNT(id) FROM reviews) LOOP
+    INSERT INTO reviews (rank_helpfulness) VALUES
+        (SELECT rank() OVER (PARTITION BY product_id ORDER BY helpfulness DESC) FROM reviews WHERE reviews.id = review_id);
   END LOOP;
-END; $$
+END; $$;
 
+SELECT * FROM (
+  SELECT id, helpfulness, rank() OVER (PARTITION BY product_id ORDER BY helpfulness DESC)
+  FROM reviews
+) t
+WHERE id = 62;
 
-REF: https://stackoverflow.com/questions/4448340/postgresql-duplicate-key-violates-unique-constraint#:~:text=13%20Answers
-s1. SELECT MAX(id) FROM reviews;
-s2. SELECT nextval('reviews_id_seq');
-s3. SELECT setval('reviews_id_seq', (SELECT MAX(id) FROM reviews)+1);
-s4.
-DO
-$do$
+SELECT rank_help FROM (
+  SELECT id, rank() OVER (PARTITION BY product_id ORDER BY helpfulness DESC) as rank_help
+  FROM reviews
+) t
+WHERE id = 62;
+
+do
+$$
 BEGIN
-  for index in 1..(SELECT COUNT(*) FROM reviews) loop
-  INSERT INTO reviews (percentage_helpfulness) VALUES (0.6897);
+  FOR review_id in 1..(SELECT COUNT(id) FROM reviews) LOOP
+    INSERT INTO reviews (rank_helpfulness)
+        (SELECT rank FROM (
+          SELECT id, rank() OVER (PARTITION BY product_id ORDER BY helpfulness DESC)
+          FROM reviews
+        ) t
+        WHERE id = review_id);
   END LOOP;
 END;
-$do$;
+$$;
 
-Before doing s4, there were 5774952 rows
-After that, there are 11549906 rows, and testing number 0.6897 could only inserted into 5774953-11549906 rows
+do
+$$
+BEGIN
+  FOR review_id in 1..(SELECT COUNT(id) FROM reviews) LOOP
+    INSERT INTO reviews (rank_helpfulness)
+        (SELECT rank FROM (
+          SELECT id, rank() OVER (PARTITION BY product_id ORDER BY helpfulness DESC)
+          FROM reviews
+        ) t
+        WHERE id = review_id) ON CONFLICT ON CONSTRAINT reviews_pkey
+        DO NOTHING;
+  END LOOP;
+END;
+$$;
+
+
+

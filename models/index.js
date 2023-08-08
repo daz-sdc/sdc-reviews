@@ -25,10 +25,9 @@ exports.getReviewsNewest = (id, count, page) => {
 
 exports.getReviewsRelevant = (id, count, page) => {
   const text = `SELECT id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
-                FROM
-                  (SELECT * FROM reviews
-                   ORDER BY 0.5 * helpfulness + 0.5 * date DESC)
+                FROM reviews
                 WHERE product_id = $1
+                ORDER BY relevance DESC
                 OFFSET ($3 - 1) * $2`;
   const params = [id, count, page];
   return db.query(text, params);
@@ -164,15 +163,12 @@ exports.getReviewsRelevant = (id, count, page) => {
 // 			) s5
 // 		ON COALESCE(s11.product, s22.product) = s5.product_id
 
-
 // // // STEP2:
 exports.getReviewsMeta = (id) => {
   const text = 'SELECT ratings, recommended, characteristics FROM mv_reviews_meta_tb WHERE product_id = $1';
   const params = [id];
   return db.query(text, params);
 };
-
-
 
 // // previous method:
 // exports.getRatings = (id) => {
