@@ -66,40 +66,6 @@ ALTER TABLE reviews
 
 -- -- experimental queries:
 
-do $$
-BEGIN
-  FOR review_id in 1..(SELECT COUNT(id) FROM reviews) LOOP
-    INSERT INTO reviews (rank_helpfulness) VALUES
-        (SELECT rank() OVER (PARTITION BY product_id ORDER BY helpfulness DESC) FROM reviews WHERE reviews.id = review_id);
-  END LOOP;
-END; $$;
-
-SELECT * FROM (
-  SELECT id, helpfulness, rank() OVER (PARTITION BY product_id ORDER BY helpfulness DESC)
-  FROM reviews
-) t
-WHERE id = 62;
-
-SELECT rank_help FROM (
-  SELECT id, rank() OVER (PARTITION BY product_id ORDER BY helpfulness DESC) as rank_help
-  FROM reviews
-) t
-WHERE id = 62;
-
-do
-$$
-BEGIN
-  FOR review_id in 1..(SELECT COUNT(id) FROM reviews) LOOP
-    INSERT INTO reviews (rank_helpfulness)
-        (SELECT rank FROM (
-          SELECT id, rank() OVER (PARTITION BY product_id ORDER BY helpfulness DESC)
-          FROM reviews
-        ) t
-        WHERE id = review_id);
-  END LOOP;
-END;
-$$;
-
 do
 $$
 BEGIN
@@ -117,3 +83,79 @@ $$;
 
 
 
+-- small table test
+CREATE TABLE test (
+  id SERIAL UNIQUE,
+  helpfulness INTEGER NULL DEFAULT NULL,
+  date DATE NULL DEFAULT NULL,
+  PRIMARY KEY(id)
+)
+
+INSERT INTO test VALUES
+  (1, 6, '2021-03-28'),
+  (2, 2, '2021-02-11'),
+  (3, 16, '2020-01-22'),
+  (4, 8, '2023-05-01');
+
+ALTER TABLE test
+    ADD COLUMN rank_helpfulness INTEGER,
+    ADD COLUMN city VARCHAR;
+
+update test SET city='A' WHERE id = 1;
+update test SET city='B' WHERE id = 2;
+update test SET city='A' WHERE id = 3;
+update test SET city='A' WHERE id = 4;
+
+INSERT INTO test (id, helpfulness, date, city) VALUES
+  (5, 9, '2022-03-28', 'C'),
+  (6, 3, '2020-02-11', 'A'),
+  (7, 10, '2021-01-22', 'B'),
+  (8, 2, '2023-05-29', 'A');
+
+do
+$$
+BEGIN
+  FOR iid in 1..(SELECT COUNT(id) FROM test) LOOP
+    INSERT INTO test (rank_helpfulness)
+        (SELECT rank FROM (
+          SELECT id, rank() OVER (PARTITION BY city ORDER BY helpfulness DESC)
+          FROM test
+        ) t
+        WHERE id = iid) ON CONFLICT ON CONSTRAINT test_pkey
+        DO NOTHING;
+  END LOOP;
+END;
+$$;
+
+
+do
+$$
+BEGIN
+  FOR iid in 1..(SELECT COUNT(id) FROM test) LOOP
+    UPDATE test SET rank_helpfulness =
+    (SELECT rank FROM (SELECT id, rank() OVER (PARTITION BY city ORDER BY helpfulness DESC) FROM test) t WHERE id = iid);
+  END LOOP;
+END;
+$$;
+
+alter table test drop column rank_helpfulness;
+ALTER TABLE test ADD COLUMN rank_helpfulness INTEGER;
+
+do
+$$
+BEGIN
+  FOR iid in 1..(SELECT COUNT(id) FROM test) LOOP
+    UPDATE test SET rank_helpfulness = iid + 100 WHERE id = iid;
+  END LOOP;
+END;
+$$;
+
+
+do
+$$
+BEGIN
+  FOR iid in 1..(SELECT COUNT(id) FROM test) LOOP
+    UPDATE test SET rank_helpfulness = (SELECT rank FROM (SELECT id, rank() OVER (PARTITION BY city ORDER BY helpfulness DESC) FROM test) t WHERE id = iid) WHERE id = iid;
+  END LOOP;
+END;
+$$;
