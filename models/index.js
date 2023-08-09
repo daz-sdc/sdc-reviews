@@ -33,6 +33,18 @@ exports.getReviewsRelevant = (id, count, page) => {
   return db.query(text, params);
 };
 
+exports.getReviewsRelevant = (id, count, page) => {
+  const text = `SELECT id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
+                FROM (
+                    SELECT *, RANK() OVER (ORDER BY helpfulness DESC) rank_helpfulness, RANK() OVER (ORDER BY date DESC) rank_date
+                    FROM reviews
+                    WHERE product_id = $1 ) t
+                ORDER BY t.rank_helpfulness + t.rank_date ASC
+                OFFSET ($3 - 1) * $2`;
+  const params = [id, count, page];
+  return db.query(text, params);
+};
+
 
 // // using create materialized view and join table:
 // CREATE MATERIALIZED VIEW mv_review_tb
