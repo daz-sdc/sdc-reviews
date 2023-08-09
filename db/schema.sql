@@ -66,36 +66,8 @@ ALTER TABLE reviews
 
 -- -- experimental queries:
 
-do
-$$
-BEGIN
-  FOR review_id in 1..(SELECT COUNT(id) FROM reviews) LOOP
-    INSERT INTO reviews (rank_helpfulness)
-        (SELECT rank FROM (
-          SELECT id, rank() OVER (PARTITION BY product_id ORDER BY helpfulness DESC)
-          FROM reviews
-        ) t
-        WHERE id = review_id) ON CONFLICT ON CONSTRAINT reviews_pkey
-        DO NOTHING;
-  END LOOP;
-END;
-$$;
 
-
-
-do
-$$
-BEGIN
-  FOR iid in 1..(SELECT COUNT(id) FROM test) LOOP
-    UPDATE test
-    SET rank_helpfulness = (SELECT rank FROM (SELECT id, rank() OVER (PARTITION BY city ORDER BY helpfulness DESC) FROM test) t WHERE id = iid)
-    WHERE id = iid;
-  END LOOP;
-END;
-$$;
-
-
--- this query works but slow, update 30 records will cost 106s:
+-- this query works but very slow, update 100 records will cost 5min 51s:
 do
 $$
 BEGIN
