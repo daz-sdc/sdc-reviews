@@ -64,6 +64,8 @@ ALTER TABLE reviews
     ADD COLUMN rank_date INTEGER,
     ADD COLUMN relevance INTEGER;
 
+ALTER TABLE reviews RENAME COLUMN id TO review_id;
+
 -- -- experimental queries:
 
 
