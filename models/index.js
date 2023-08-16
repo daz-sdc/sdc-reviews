@@ -1,57 +1,6 @@
 const db = require('../db');
 // // original version:
 
-// exports.getReviewsHelpful = (id, count, page) => {
-//   const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
-//                 FROM reviews
-//                 WHERE product_id = $1
-//                 ORDER BY helpfulness DESC
-//                 LIMIT $2
-//                 OFFSET ($3 - 1) * $2`;
-//   const params = [id, count, page];
-//   return db.query(text, params);
-// };
-
-// exports.getReviewsHelpful = (id, count, page) => {
-//   const text = `SELECT r.review_id, r.rating, r.summary, r.recommend, r.response, r.body, r.date, r.reviewer_name, r.helpfulness, rp.photos
-//                 FROM reviews r
-//                 LEFT JOIN
-//                   (SELECT review_id,
-//                           jsonb_agg(jsonb_build_object('id', id, 'url', url)) AS photos
-//                   FROM reviews_photos
-//                   GROUP by review_id
-//                   ) rp
-//                 ON rp.review_id = r.review_id
-//                 WHERE product_id = $1
-//                 ORDER BY helpfulness DESC
-//                 LIMIT $2
-//                 OFFSET ($3 - 1) * $2`;
-//   const params = [id, count, page];
-//   return db.query(text, params);
-// };
-
-// exports.getReviewsHelpful = (id, count, page) => {
-//   const text = `SELECT r.review_id, r.rating, r.summary, r.recommend, r.response, r.body, r.date, r.reviewer_name, r.helpfulness, rp.photos
-//                 FROM reviews r
-//                 LEFT JOIN
-//                   (SELECT review_id,
-//                           CASE WHEN jsonb_agg(id) = '[]'::jsonb
-//                             THEN '[]'::jsonb
-//                             ELSE jsonb_agg(jsonb_build_object('id', id, 'url', url))
-//                           END AS photos
-//                   FROM reviews_photos
-//                   GROUP by review_id
-//                   ) rp
-//                 ON rp.review_id = r.review_id
-//                 WHERE product_id = $1
-//                 ORDER BY helpfulness DESC
-//                 LIMIT $2
-//                 OFFSET ($3 - 1) * $2`;
-//   const params = [id, count, page];
-//   return db.query(text, params);
-// };
-
-
 exports.getReviewsHelpful = (id, count, page) => {
   const text = `SELECT r.review_id, r.rating, r.summary, r.recommend, r.response, r.body, r.date, r.reviewer_name, r.helpfulness,
                 CASE
