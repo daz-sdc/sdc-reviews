@@ -2,18 +2,8 @@ const db = require('../db');
 // // original version:
 
 exports.getReviewsHelpful = (id, count, page) => {
-  const text = `SELECT r.review_id, r.rating, r.summary, r.recommend, r.response, r.body, r.date, r.reviewer_name, r.helpfulness,
-                CASE
-                  WHEN jsonb_typeof(rp.photos) IS NULL THEN '[]'::jsonb
-                  ELSE rp.photos
-                END photos
-                FROM reviews r
-                LEFT JOIN
-                  (SELECT review_id, jsonb_agg(jsonb_build_object('id', id, 'url', url)) AS photos
-                  FROM reviews_photos
-                  GROUP by review_id
-                  ) rp
-                ON rp.review_id = r.review_id
+  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
+                FROM mv_reviews_tb
                 WHERE product_id = $1
                 ORDER BY helpfulness DESC
                 LIMIT $2
@@ -22,10 +12,9 @@ exports.getReviewsHelpful = (id, count, page) => {
   return db.query(text, params);
 };
 
-
 exports.getReviewsNewest = (id, count, page) => {
-  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
-                FROM reviews
+  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
+                FROM mv_reviews_tb
                 WHERE product_id = $1
                 ORDER BY date DESC
                 LIMIT $2
@@ -35,10 +24,10 @@ exports.getReviewsNewest = (id, count, page) => {
 };
 
 exports.getReviewsRelevant = (id, count, page) => {
-  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness
+  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
                 FROM (
                     SELECT *, RANK() OVER (ORDER BY helpfulness DESC) rank_helpfulness, RANK() OVER (ORDER BY date DESC) rank_date
-                    FROM reviews
+                    FROM mv_reviews_tb
                     WHERE product_id = $1 ) t
                 ORDER BY t.rank_helpfulness + t.rank_date ASC
                 LIMIT $2
@@ -46,56 +35,6 @@ exports.getReviewsRelevant = (id, count, page) => {
   const params = [id, count, page];
   return db.query(text, params);
 };
-
-// // using create materialized view and join table:
-// CREATE MATERIALIZED VIEW mv_review_tb
-// AS
-// SELECT r.product, r.review_id, r.rating, r.summary, r.recommend, r.response, r.body, r.date, r.reviewer_name, r.helpfulness, rp.photos
-//                 FROM reviews r
-//                 FULL OUTER JOIN (
-//                                   SELECT review_id, jsonb_agg(jsonb_build_object('id', id, 'url', url)) photos
-//                                   FROM reviews_photos
-//                                   GROUP BY review_id
-//                                 ) rp
-//                 ON r.review_id = rp.review_id
-
-// exports.getReviewsHelpful = (id, count, page) => {
-//   const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
-//                 FROM mv_review_tb
-//                 WHERE product = $1
-//                 ORDER BY helpfulness DESC
-//                 LIMIT $2
-//                 OFFSET ($3 - 1) * $2`;
-//   const params = [id, count, page];
-//   return db.query(text, params);
-// };
-
-
-// exports.getReviewsNewest = (id, count, page) => {
-//   const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
-//                 FROM mv_review_tb
-//                 WHERE product = $1
-//                 ORDER BY date DESC
-//                 LIMIT $2
-//                 OFFSET ($3 - 1) * $2`;
-//   const params = [id, count, page];
-//   return db.query(text, params);
-// };
-
-// exports.getReviewsRelevant = (id, count, page) => {
-//   const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
-//                 FROM mv_review_tb
-//                 WHERE product = $1
-//                 ORDER BY
-//                 CASE WHEN (date_part('year', (SELECT current_timestamp)) - EXTRACT(YEAR FROM date) <= 2)
-//                      THEN helpfulness END DESC,
-//                 CASE WHEN (date_part('year', (SELECT current_timestamp)) - EXTRACT(YEAR FROM date) > 2)
-//                      THEN date END DESC
-//                 LIMIT $2
-//                 OFFSET ($3 - 1) * $2`;
-//   const params = [id, count, page];
-//   return db.query(text, params);
-// };
 
 // test1:
 // const text = `SELECT r.product, r.helpfulness, rp.photo_id, rp.url, rp.review_id FROM reviews as r JOIN reviews_photos as rp ON r.id = rp.review_id WHERE $1 IS NULL or r.product = $1`;

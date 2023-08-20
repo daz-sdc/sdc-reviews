@@ -66,6 +66,32 @@ ALTER TABLE reviews
 
 ALTER TABLE reviews RENAME COLUMN id TO review_id;
 
+
+-- Create Indices
+CREATE INDEX idx_product_id ON reviews(product_id);
+
+CREATE INDEX idx_mv_reviews_tb_product_id ON mv_reviews_tb(product_id);
+
+
+-- Create Materialized Views
+
+CREATE MATERIALIZED VIEW mv_reviews_tb
+AS
+SELECT r.*,
+CASE
+  WHEN jsonb_typeof(rp.photos) IS NULL THEN '[]'::jsonb
+  ELSE rp.photos
+END photos
+FROM reviews r
+LEFT JOIN
+  (SELECT review_id, jsonb_agg(jsonb_build_object('id', id, 'url', url)) AS photos
+  FROM reviews_photos
+  GROUP by review_id
+  ) rp
+ON rp.review_id = r.review_id;
+
+
+
 -- -- experimental queries:
 
 
