@@ -36,37 +36,6 @@ exports.getReviewsRelevant = (id, count, page) => {
   return db.query(text, params);
 };
 
-// test1:
-// const text = `SELECT r.product, r.helpfulness, rp.photo_id, rp.url, rp.review_id FROM reviews as r JOIN reviews_photos as rp ON r.id = rp.review_id WHERE $1 IS NULL or r.product = $1`;
-
-// test2:
-// const text = `SELECT rp.review_id, r.rating, r.summary, r.recommend, r.response, r.body, r.date, r.reviewer_name, r.helpfulness, rp.photo_id, rp.url FROM reviews r JOIN reviews_photos as rp ON r.id = rp.review_id WHERE $1::integer IS NULL or r.product = $1::integer`;
-
-// original:
-// const text = `SELECT r.product, r.rating, r.summary, r.recommend, r.response, r.body, r.date, r.reviewer_name, r.helpfulness, rp.photo_id, rp.url, rp.review_id FROM reviews r JOIN reviews_photos as rp ON r.id = rp.review_id WHERE $1::integer IS NULL or r.product = $1::integer`;
-
-
-// // original:
-// exports.getPhotos = (reviewId) => {
-//   const text = `SELECT id, url
-//                 FROM reviews_photos
-//                 WHERE review_id = $1`;
-//   const params = [reviewId];
-//   return db.query(text, params);
-// };
-
-// // new1:
-// exports.getPhotos = (reviewId) => {
-//   const text = `SELECT jsonb_agg(jsonb_build_object('id', id, 'url', url)) photos
-//                 FROM reviews_photos
-//                 WHERE review_id = $1
-//                 GROUP BY review_id`;
-//   const params = [reviewId];
-//   return db.query(text, params);
-// };
-
-
-
 // // Meta:
 // // mew method:
 

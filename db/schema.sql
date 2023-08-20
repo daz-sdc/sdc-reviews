@@ -69,6 +69,7 @@ ALTER TABLE reviews RENAME COLUMN id TO review_id;
 
 -- Create Indices
 CREATE INDEX idx_product_id ON reviews(product_id);
+DROP INDEX idx_product_id;
 
 CREATE INDEX idx_mv_reviews_tb_product_id ON mv_reviews_tb(product_id);
 
