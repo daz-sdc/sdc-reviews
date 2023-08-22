@@ -85,6 +85,7 @@ LEFT JOIN
 ON rp.review_id = r.review_id;
 
 
+
 CREATE MATERIALIZED VIEW mv_meta_tb
 AS
 SELECT

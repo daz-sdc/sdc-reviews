@@ -6,18 +6,17 @@ export const options = {
   scenarios: {
     constant_request_rate: {
       executor: 'constant-arrival-rate',
-      rate: 1000,
+      rate: 2500,
       timeUnit: '1s',
       duration: '60s',
-      preAllocatedVUs: 100,
-      maxVUs: 100,
+      preAllocatedVUs: 200,
+      maxVUs: 210,
     },
   },
 };
 
 export default () => {
-  const i = randomIntBetween(900000, 1000000);
+  const i = randomIntBetween(899800, 1000011);
   const url = `http://localhost:8000/reviews/meta?product_id=${i}`;
-  console.log('***url***', url);
   http.get(url);
 };
