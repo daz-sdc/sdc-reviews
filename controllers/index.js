@@ -35,13 +35,15 @@ exports.getReviews = async function getReviews(req, res) {
 };
 
 exports.getReviewsMeta = async function getReviewsMeta(req, res) {
-  const productId = req.query.product_id;
-  const arr = await models.getReviewsMeta(productId);
   const output = {
-    product_id: productId,
+    product_id: req.query.product_id,
   };
-  Object.assign(output, arr.rows[0]);
-  res.send(output);
+  models.getReviewsMeta(req.query.product_id)
+    .then((data) => {
+      Object.assign(output, data.rows[0]);
+      res.send(output);
+    })
+    .catch((err) => res.send(err));
 };
 
 exports.postReviews = (req, res) => {
