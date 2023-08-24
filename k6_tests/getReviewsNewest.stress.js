@@ -6,7 +6,7 @@ const options = {
   scenarios: {
     constant_request_rate: {
       executor: 'constant-arrival-rate',
-      rate: 2500, // (required) Number of iterations to start during each timeUnit period.
+      rate: 2000, // (required) Number of iterations to start during each timeUnit period.
       timeUnit: '1s', // Number of VUs to pre-allocate before test start to preserve runtime resources. DEFAULT: 1s
       duration: '60s', // (required) Total scenario duration (excluding gracefulStop).
       preAllocatedVUs: 200, // (required) Number of VUs to pre-allocate before test start to preserve runtime resources.

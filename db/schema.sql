@@ -59,13 +59,7 @@ ALTER TABLE reviews
     USING
          timestamp with time zone 'epoch' + date * interval '1 millisecond';
 
-ALTER TABLE reviews
-    ADD COLUMN rank_helpfulness INTEGER,
-    ADD COLUMN rank_date INTEGER,
-    ADD COLUMN relevance INTEGER;
-
 ALTER TABLE reviews RENAME COLUMN id TO review_id;
-
 
 -- Create Materialized Views
 
