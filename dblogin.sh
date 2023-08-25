@@ -1,1 +1,0 @@
-ssh -i "sdc-pasta-db-v2.pem" ubuntu@ec2-34-222-19-196.us-west-2.compute.amazonaws.com

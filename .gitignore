@@ -3,3 +3,5 @@
 .env
 *.pem
 pg_dump_sdc.pgsql
+*.sh
+*.log
