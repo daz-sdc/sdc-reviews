@@ -2,7 +2,7 @@
 -- Table 'Reviews'
 
 CREATE TABLE reviews (
-  id SERIAL UNIQUE,
+  review_id SERIAL UNIQUE,
   product_id INTEGER NULL DEFAULT NULL,
   rating INTEGER NULL DEFAULT NULL,
   date BIGINT NULL DEFAULT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE reviews (
   reviewer_email VARCHAR NULL DEFAULT NULL,
   response VARCHAR NULL DEFAULT NULL,
   helpfulness INTEGER NULL DEFAULT NULL,
-  PRIMARY KEY (id)
+  PRIMARY KEY (review_id)
 );
 
 -- Table 'Characteristics'
@@ -38,7 +38,7 @@ CREATE TABLE characteristic_reviews (
   FOREIGN KEY (characteristic_id)
       REFERENCES characteristics (id),
   FOREIGN KEY (review_id)
-      REFERENCES reviews (id)
+      REFERENCES reviews (review_id)
 );
 
 -- Table 'Reviews_photos'
@@ -49,7 +49,7 @@ CREATE TABLE reviews_photos (
   url VARCHAR NULL DEFAULT NULL,
   PRIMARY KEY (id),
   FOREIGN KEY (review_id)
-      REFERENCES reviews (id)
+      REFERENCES reviews (review_id)
 );
 
 -- after inserting data into tables:
@@ -58,8 +58,6 @@ ALTER TABLE reviews
     ALTER COLUMN date TYPE timestamp with time zone
     USING
          timestamp with time zone 'epoch' + date * interval '1 millisecond';
-
-ALTER TABLE reviews RENAME COLUMN id TO review_id;
 
 -- Create Materialized Views
 
@@ -133,6 +131,10 @@ CREATE INDEX idx_mv_reviews_tb_product_id ON mv_reviews_tb(product_id);
 CREATE INDEX idx_mv_meta_tb_product_id ON mv_meta_tb(product_id);
 
 
--- -- experimental queries:
+-- Sync primary key sequences:
+SELECT setval('reviews_id_seq', (SELECT MAX(review_id) FROM reviews));
+SELECT setval('reviews_photos_id_seq', (SELECT MAX(id) FROM reviews_photos));
+SELECT setval('characteristics_id_seq', (SELECT MAX(id) FROM characteristics));
+SELECT setval('characteristic_reviews_id_seq', (SELECT MAX(id) FROM characteristic_reviews));
 
 

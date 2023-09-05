@@ -27,10 +27,10 @@ exports.getReviews = async function getReviews(req, res) {
 
     Promise.all(reviews.rows).then((bigBox) => {
       output.results = bigBox;
-      res.send(output);
+      res.status(200).send(output);
     });
   } catch (e) {
-    res.send(e);
+    throw new Error('Failed to get reviews', e);
   }
 };
 
@@ -41,37 +41,39 @@ exports.getReviewsMeta = async function getReviewsMeta(req, res) {
   models.getReviewsMeta(req.query.product_id)
     .then((data) => {
       Object.assign(output, data.rows[0]);
-      res.send(output);
+      res.status(200).send(output);
     })
-    .catch((err) => res.send(err));
+    .catch((err) => {
+      throw new Error('Failed to get reviews metadata', err);
+    });
 };
 
 exports.postReviews = (req, res) => {
   models.postReviews(req.body)
-    .then((data) => {
-      res.status(201).send(data);
+    .then(() => {
+      res.status(201).send('Successfully post the new review');
     })
     .catch((err) => {
-      res.status(501).send(err);
+      throw new Error('Failed to post reviews', err);
     });
 };
 
 exports.putReviewsHelpfulness = (req, res) => {
   models.putReviewsHelpfulness(req.body)
     .then((data) => {
-      res.status(204).send(data);
+      res.status(204).send('Successfully increase the helpfulness');
     })
     .catch((err) => {
-      res.status(501).send(err);
+      throw new Error('Failed to change helpfulness', err);
     });
 };
 
 exports.putReviewsReport = (req, res) => {
   models.putReviewsReport(req.body)
     .then((data) => {
-      res.status(204).send(data);
+      res.status(204).send('Successfully change report status');
     })
     .catch((err) => {
-      res.status(501).send(err);
+      throw new Error('Failed to change report status', err);
     });
 };
