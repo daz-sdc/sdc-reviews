@@ -5,3 +5,4 @@
 pg_dump_sdc.pgsql
 *.sh
 *.log
+*.rdb

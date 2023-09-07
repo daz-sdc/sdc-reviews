@@ -1,11 +1,13 @@
 const models = require('../models');
 require('dotenv').config();
-
 const loader = process.env.LOADER;
-
 exports.getLoaderToken = (req, res) => {
   res.status(200).send(loader);
 };
+
+
+const redisClient = require('../redis-client.js');
+const DEFAULT_EXPIRATION = 3600;
 
 exports.getReviews = async function getReviews(req, res) {
   const page = Number(req.query.page) || 1;
@@ -25,8 +27,12 @@ exports.getReviews = async function getReviews(req, res) {
       reviews = await models.getReviewsRelevant(product, count, page);
     }
 
-    Promise.all(reviews.rows).then((bigBox) => {
+    Promise.all(reviews.rows).then(async (bigBox) => {
+      await redisClient.connect();
       output.results = bigBox;
+      await redisClient.set('key', JSON.stringify(output));
+      const value = await redisClient.get('key');
+      console.log(value);
       res.status(200).send(output);
     });
   } catch (e) {
