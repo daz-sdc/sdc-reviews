@@ -2,7 +2,7 @@
 -- Table 'Reviews'
 
 CREATE TABLE reviews (
-  review_id SERIAL UNIQUE,
+  review_id SERIAL,
   product_id INTEGER NULL DEFAULT NULL,
   rating INTEGER NULL DEFAULT NULL,
   date BIGINT NULL DEFAULT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE reviews (
 -- Table 'Characteristics'
 
 CREATE TABLE characteristics (
-  id SERIAL UNIQUE,
+  id SERIAL,
   product_id INTEGER NULL DEFAULT NULL,
   name VARCHAR NULL DEFAULT NULL,
   PRIMARY KEY (id)
@@ -30,7 +30,7 @@ CREATE TABLE characteristics (
 -- Table 'Characteristic_reviews'
 
 CREATE TABLE characteristic_reviews (
-  id SERIAL UNIQUE,
+  id SERIAL,
   characteristic_id INTEGER NULL DEFAULT NULL,
   review_id INTEGER NULL DEFAULT NULL,
   value INTEGER NULL DEFAULT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE characteristic_reviews (
 -- Table 'Reviews_photos'
 
 CREATE TABLE reviews_photos (
-  id SERIAL UNIQUE,
+  id SERIAL,
   review_id INTEGER NULL DEFAULT NULL,
   url VARCHAR NULL DEFAULT NULL,
   PRIMARY KEY (id),
@@ -61,7 +61,7 @@ ALTER TABLE reviews
 
 -- Create Materialized Views
 
-CREATE MATERIALIZED VIEW mv_reviews_tb
+CREATE MATERIALIZED VIEW mat_view_reviews
 AS
 SELECT r.*,
 CASE
@@ -78,7 +78,7 @@ ON rp.review_id = r.review_id;
 
 
 
-CREATE MATERIALIZED VIEW mv_meta_tb
+CREATE MATERIALIZED VIEW mat_view_metadata
 AS
 SELECT
 	s1.product_id, s1.ratings, s2.recommended, s3.characteristics
@@ -126,9 +126,9 @@ ON s3.product_id = s1.product_id;
 
 -- Create Indices
 
-CREATE INDEX idx_mv_reviews_tb_product_id ON mv_reviews_tb(product_id);
+CREATE INDEX idx_mat_view_reviews_product_id ON mat_view_reviews(product_id);
 
-CREATE INDEX idx_mv_meta_tb_product_id ON mv_meta_tb(product_id);
+CREATE INDEX idx_mat_view_metadata_product_id ON mat_view_metadata(product_id);
 
 
 -- Sync primary key sequences:
@@ -138,3 +138,12 @@ SELECT setval('characteristics_id_seq', (SELECT MAX(id) FROM characteristics));
 SELECT setval('characteristic_reviews_id_seq', (SELECT MAX(id) FROM characteristic_reviews));
 
 
+-- drop materialized views and then create indices on tables:
+
+---- speed up from 6.29s to 3.10s
+CREATE INDEX idx_productid_and_reviewid ON reviews(product_id, review_id);
+CREATE INDEX idx_review_id ON reviews_photos(review_id);
+
+---- speed up from 1016ms to 21ms for quering metadata:
+CREATE INDEX idx_productid_char ON characteristics(product_id);
+CREATE INDEX idx_charid_char_reviews ON characteristic_reviews(characteristic_id);

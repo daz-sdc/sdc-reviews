@@ -2,8 +2,18 @@ const db = require('../db');
 
 // reviews:
 exports.getReviewsHelpful = (id, count, page) => {
-  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
-                FROM mv_reviews_tb
+  const text = `SELECT r.review_id, r.rating, r.summary, r.response, r.body, r.date, r.recommend, r.reviewer_name, r.helpfulness,
+                CASE
+                  WHEN jsonb_typeof(rp.photos) IS NULL THEN '[]'::jsonb
+                  ELSE rp.photos
+                END photos
+                FROM reviews r
+                LEFT JOIN
+                  (SELECT review_id, jsonb_agg(jsonb_build_object('id', id, 'url', url)) AS photos
+                  FROM reviews_photos
+                  GROUP by review_id
+                  ) rp
+                ON rp.review_id = r.review_id
                 WHERE product_id = $1
                 ORDER BY helpfulness DESC
                 LIMIT $2
@@ -13,8 +23,18 @@ exports.getReviewsHelpful = (id, count, page) => {
 };
 
 exports.getReviewsNewest = (id, count, page) => {
-  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
-                FROM mv_reviews_tb
+  const text = `SELECT r.review_id, r.rating, r.summary, r.response, r.body, r.date, r.recommend, r.reviewer_name, r.helpfulness,
+                CASE
+                  WHEN jsonb_typeof(rp.photos) IS NULL THEN '[]'::jsonb
+                  ELSE rp.photos
+                END photos
+                FROM reviews r
+                LEFT JOIN
+                  (SELECT review_id, jsonb_agg(jsonb_build_object('id', id, 'url', url)) AS photos
+                  FROM reviews_photos
+                  GROUP by review_id
+                  ) rp
+                ON rp.review_id = r.review_id
                 WHERE product_id = $1
                 ORDER BY date DESC
                 LIMIT $2
@@ -24,12 +44,20 @@ exports.getReviewsNewest = (id, count, page) => {
 };
 
 exports.getReviewsRelevant = (id, count, page) => {
-  const text = `SELECT review_id, rating, summary, recommend, response, body, date, reviewer_name, helpfulness, photos
-                FROM (
-                    SELECT *, RANK() OVER (ORDER BY helpfulness DESC) rank_helpfulness, RANK() OVER (ORDER BY date DESC) rank_date
-                    FROM mv_reviews_tb
-                    WHERE product_id = $1 ) t
-                ORDER BY t.rank_helpfulness + t.rank_date ASC
+  const text = `SELECT r.review_id, r.rating, r.summary, r.response, r.body, r.date, r.recommend, r.reviewer_name, r.helpfulness,
+                CASE
+                  WHEN jsonb_typeof(rp.photos) IS NULL THEN '[]'::jsonb
+                  ELSE rp.photos
+                END photos
+                FROM reviews r
+                LEFT JOIN
+                  (SELECT review_id, jsonb_agg(jsonb_build_object('id', id, 'url', url)) AS photos
+                  FROM reviews_photos
+                  GROUP by review_id
+                  ) rp
+                ON rp.review_id = r.review_id
+                WHERE product_id = $1
+                ORDER BY RANK() OVER (ORDER BY r.helpfulness DESC) + RANK() OVER (ORDER BY r.date DESC) ASC
                 LIMIT $2
                 OFFSET ($3 - 1) * $2`;
   const params = [id, count, page];
@@ -39,7 +67,51 @@ exports.getReviewsRelevant = (id, count, page) => {
 // reviews&ratings metadata:
 
 exports.getReviewsMeta = (id) => {
-  const text = 'SELECT ratings, recommended, characteristics FROM mv_meta_tb WHERE product_id = $1';
+  const text = `SELECT ratings, recommended, characteristics
+                FROM (
+                  SELECT s1.product_id, s1.ratings, s2.recommended, s3.characteristics
+                  FROM (
+                    SELECT
+                      product_id, jsonb_object_agg (value, CAST(count_char_value AS VARCHAR)) AS ratings
+                    FROM (
+                      SELECT
+                        c.product_id, cr.value, COUNT(cr.value) AS count_char_value
+                      FROM  characteristic_reviews cr
+                      LEFT JOIN characteristics c
+                      ON cr.characteristic_id = c.id
+                      GROUP BY c.product_id, cr.value
+                    ) s11
+                    GROUP BY s11.product_id
+                  ) s1
+                  FULL OUTER JOIN (
+                    SELECT
+                      product_id, jsonb_object_agg (recommend, CAST(count_recommend AS VARCHAR)) AS recommended
+                    FROM (
+                      SELECT
+                      product_id, recommend, COUNT(recommend) AS count_recommend
+                      FROM reviews
+                      GROUP BY product_id, recommend
+                    ) s22
+                    GROUP BY s22.product_id
+                  ) s2
+                  ON s1.product_id = s2.product_id
+                  FULL OUTER JOIN (
+                    SELECT product_id, jsonb_object_agg(name, overall_characteristics) AS characteristics
+                    FROM (
+                      SELECT product_id, name, jsonb_build_object('id', char_id, 'value', CAST(avg_value AS VARCHAR)) AS overall_characteristics
+                      FROM (
+                        SELECT c.product_id, c.id as char_id, c.name, CAST(SUM(cr.value) AS DECIMAL) / COUNT(c.id) as avg_value
+                        FROM characteristic_reviews cr
+                        LEFT JOIN characteristics c
+                        ON cr.characteristic_id = c.id
+                        GROUP BY char_id, c.product_id
+                      ) t
+                    ) tt
+                    GROUP BY product_id
+                  ) s3
+                  ON s3.product_id = s1.product_id
+                ) info_metadata
+                WHERE product_id = $1`;
   const params = [id];
   return db.query(text, params);
 };
