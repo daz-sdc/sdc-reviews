@@ -4,6 +4,7 @@ const express = require('express');
 const loader = process.env.LOADER;
 const router = express.Router();
 const {
+  cache,
   getReviews,
   getReviewsMeta,
   postReviews,
@@ -13,7 +14,7 @@ const {
 } = require('./controllers');
 
 router.route('/reviews').get(getReviews);
-router.route('/reviews/meta').get(getReviewsMeta);
+router.get('/reviews/meta', getReviewsMeta)
 router.route('/reviews').post(postReviews);
 router.route('/reviews/:review_id/helpful').put(putReviewsHelpfulness);
 router.route('/reviews/:review_id/report').put(putReviewsReport);
