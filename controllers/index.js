@@ -2,52 +2,8 @@ const models = require('../models');
 require('dotenv').config();
 const loader = process.env.LOADER;
 
-// const redisClient = require('../redis-client.js');
-
-
-// exports.getReviews = async function getReviews(req, res) {
-
-//   const page = Number(req.query.page) || 1;
-//   const count = Number(req.query.count) || 5;
-//   const sort = (!['newest', 'helpful', 'relevant'].includes(req.query.sort)) ? 'relevant' : req.query.sort;
-//   const product = req.query.product_id;
-//   const output = { product, page, count };
-
-
-//   let reviews;
-//   try {
-//     await cache.connect();
-//     const cachedData = await cache.get('reviews');
-//     console.log('cachedData2', res.json(cachedData))
-
-//     if (cachedData) {
-//       console.log('got cached data');
-//       // res.status(200).send(cachedData);
-//       return res.json(cachedData)
-//     }
-
-//     if (sort === 'helpful') {
-//       reviews = await models.getReviewsHelpful(product, count, page);
-//     } else if (sort === 'newest') {
-//       reviews = await models.getReviewsNewest(product, count, page);
-//     } else {
-//       reviews = await models.getReviewsRelevant(product, count, page);
-//     }
-
-//     Promise.all(reviews.rows).then(async (bigBox) => {
-//       output.results = bigBox;
-//       await cache.saveWithTtl('reviews', JSON.stringify(output), 60);
-//       await cache.quit();
-//       res.status(200).send(output);
-//     });
-//   } catch (e) {
-//     throw new Error('Failed to get reviews', e);
-//   }
-// };
-
 
 const Redis = require('redis');
-
 let redisClient;
 
 (async () => {
@@ -58,14 +14,28 @@ let redisClient;
   });
 
   redisClient.on('error', err => console.log('Redis Client Error', err));
-
   await redisClient.connect();
 
 })();
 
 
-exports.getReviews = async function getReviews(req, res) {
+exports.cacheDataReviews = async function cacheDataReviews(req, res, next) {
+  const product = req.query.product_id;
+  let output;
+  try {
+    const cacheResults = await redisClient.get(product);
+    if (cacheResults) {
+      res.status(200).send(JSON.parse(cacheResults));
+    } else {
+      next();
+    }
+  } catch (error) {
+    throw new Error('Cache Error', e);
+  }
+}
 
+
+exports.getReviews = async function getReviews(req, res) {
 
   const page = Number(req.query.page) || 1;
   const count = Number(req.query.count) || 5;
@@ -73,16 +43,16 @@ exports.getReviews = async function getReviews(req, res) {
   const product = req.query.product_id;
   const output = { product, page, count };
 
-  let isCached = false;
+  // let isCached = false;
   let reviews;
   try {
 
-    const cacheResults = await redisClient.get(product);
+    // const cacheResults = await redisClient.get(product);
 
-    if (cacheResults) {
-      isCached = true;
-      res.status(200).send(JSON.parse(cacheResults));
-    } else {
+    // if (cacheResults) {
+    //   isCached = true;
+    //   res.status(200).send(JSON.parse(cacheResults));
+    // } else {
       if (sort === 'helpful') {
         reviews = await models.getReviewsHelpful(product, count, page);
       } else if (sort === 'newest') {
@@ -93,43 +63,18 @@ exports.getReviews = async function getReviews(req, res) {
 
       Promise.all(reviews.rows).then(async(bigBox) => {
         output.results = bigBox;
-        await redisClient.set(product, JSON.stringify(output), 'EX', 30);
+        await redisClient.set(product, JSON.stringify(output), {
+          EX: 60,
+          NX: true
+        });
         res.status(200).send(output);
       });
-    }
-
+    // }
 
   } catch (e) {
     throw new Error('Failed to get reviews', e);
   }
 };
-
-
-// exports.getReviews = async function getReviews(req, res) {
-//   const page = Number(req.query.page) || 1;
-//   const count = Number(req.query.count) || 5;
-//   const sort = (!['newest', 'helpful', 'relevant'].includes(req.query.sort)) ? 'relevant' : req.query.sort;
-//   const product = req.query.product_id;
-//   const output = { product, page, count };
-
-//   let reviews;
-//   try {
-//     if (sort === 'helpful') {
-//       reviews = await models.getReviewsHelpful(product, count, page);
-//     } else if (sort === 'newest') {
-//       reviews = await models.getReviewsNewest(product, count, page);
-//     } else {
-//       reviews = await models.getReviewsRelevant(product, count, page);
-//     }
-
-//     Promise.all(reviews.rows).then((bigBox) => {
-//       output.results = bigBox;
-//       res.status(200).send(output);
-//     });
-//   } catch (e) {
-//     throw new Error('Failed to get reviews', e);
-//   }
-// };
 
 
 exports.getReviewsMeta = async function getReviewsMeta(req, res) {
