@@ -153,14 +153,14 @@ exports.postReviews = async (obj) => {
 
 };
 
-exports.putReviewsHelpfulness = (obj) => {
+exports.putReviewsHelpfulness = async (obj) => {
   const reviewId = obj.review_id;
   const text = `UPDATE reviews SET helpfulness = helpfulness + 1 WHERE review_id = ${reviewId}`;
-  return db.query(text);
+  await db.query(text);
 };
 
-exports.putReviewsReport = (obj) => {
+exports.putReviewsReport = async (obj) => {
   const reviewId = obj.review_id;
   const text = `UPDATE reviews SET reported = NOT reported WHERE review_id = ${reviewId}`;
-  return db.query(text);
+  await db.query(text);
 };
