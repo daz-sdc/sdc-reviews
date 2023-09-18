@@ -153,14 +153,27 @@ exports.postReviews = async (obj) => {
 
 };
 
+
+exports.getMaxReviewId = (product_id) => {
+  return db.query(`SELECT MAX(review_id) FROM reviews WHERE product_id = ${product_id}`);
+}
+
+exports.getMaxPhotoId = (review_id) => {
+  return db.query(`SELECT MAX(id) FROM reviews_photos WHERE review_id = ${review_id}`);
+}
+
+// change helpfulness:
 exports.putReviewsHelpfulness = async (obj) => {
   const reviewId = obj.review_id;
-  const text = `UPDATE reviews SET helpfulness = helpfulness + 1 WHERE review_id = ${reviewId}`;
-  await db.query(text);
+  const text = `UPDATE reviews SET helpfulness = helpfulness + 1 WHERE review_id = ${reviewId} RETURNING product_id`;
+  const result = await db.query(text);
+  return result;
 };
 
+// change report status:
 exports.putReviewsReport = async (obj) => {
   const reviewId = obj.review_id;
   const text = `UPDATE reviews SET reported = NOT reported WHERE review_id = ${reviewId}`;
   await db.query(text);
 };
+

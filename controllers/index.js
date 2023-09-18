@@ -47,7 +47,7 @@ async function helper(product, count, page, sort) {
     }
     await Promise.all(reviews.rows).then((bigBox) => {
       output.results = bigBox;
-      redisClient.set(product, JSON.stringify(output));
+      redisClient.set(String(product), JSON.stringify(output));
     });
   } catch (e) {
     console.log(e);
@@ -65,7 +65,6 @@ async function returnReviews(req) {
 
   return result;
 };
-
 
 async function getReviews(req, res) {
   const output = await returnReviews(req);
@@ -85,39 +84,81 @@ async function getReviewsMeta(req, res) {
 };
 
 async function postReviews (req, res) {
+  // if reviews of this product is not existing in the cache OR the cache is not sorted by the newest date:
+    // update the db
+    // update the cache later
+  // else:
+    // update the cache
+    // update the db later
   const product = req.body.product_id;
-  models.postReviews(req.body)
-  .then(async () => {
+  const [rating, summary, body, recommend, name, photos] = [req.body.rating, req.body.summary, req.body.body, req.body.recommend, req.body.name, req.body.photos];
+  const cacheResult = await redisClient.get(String(product));
+  const parseCacheResult = JSON.parse(cacheResult);
+  if (cacheResult === null || parseCacheResult['sort'] !== 'newest') {
+    models.postReviews(req.body)
+    .then(async () => {
+      try {
+        const result = await helper(String(product), 5, 1, 'relevant');
+        await redisClient.set(String(product), JSON.stringify(result));
+      } catch (e) {
+        console.log(e);
+      }
+    })
+    .then(() => res.status(201).send('Successfully post new review in the db and then cache'))
+    .catch(e => console.log('error', e));
+  } else {
+    let newReview = {};
+    Object.assign(newReview, {rating, summary, body, recommend, reviewer_name: name, photos, 'date': new Date().toISOString(), 'helpfulness': 0, 'response': 'null'});
+    await models.getMaxReviewId(product)
+    .then(async (r_data) => {
+      const maxReviewId = r_data.rows[0].max;
+      newReview['review_id'] = maxReviewId + 1;
+      await models.getMaxPhotoId(maxReviewId)
+      .then((p_data) => {
+        let maxPhotoId = p_data.rows[0].max;
+        newReview['photos'].map((photo, index) => {
+          newReview['photos'][index] = {'id': maxPhotoId++, 'url': photo}
+        })
+      })
+      .catch(e => console.log(e));
+    })
+    .catch(e => console.log(e));
+    parseCacheResult['results'].unshift(newReview);
+    redisClient.set(String(product), JSON.stringify(parseCacheResult));
     try {
-      const result = await helper(String(product), 5, 1, 'relevant');
-      await redisClient.set(String(product), JSON.stringify(result));
-    } catch (e) {
-      console.log(e);
-    }
+      await models.postReviews(req.body)
+    } catch (e) {console.log(e)};
+    res.status(201).send('Successfully update new review in the cache and then db');
+  }
+
+};
+
+
+async function putReviewsHelpfulness (req, res) {
+  // if not in the cache:
+    // add the product reviews into the cache
+  // if in the cache:
+    // update the cache
+  // then update db later
+
+  await models.putReviewsHelpfulness(req.params)
+  .then((data) => {
+    // console.log('update', data);
+    res.status(204).send('Successfully increase the helpfulness');
   })
-  .then(() => res.status(201).send('Successfully post the new review'))
-  .catch(e => console.log(e));
+  .catch((err) => {
+    throw new Error('Failed to change helpfulness', err);
+  });
 };
 
-
-function putReviewsHelpfulness (req, res) {
-  models.putReviewsHelpfulness(req.params)
-    .then(() => {
-      res.status(204).send('Successfully increase the helpfulness');
-    })
-    .catch((err) => {
-      throw new Error('Failed to change helpfulness', err);
-    });
-};
-
-function putReviewsReport (req, res) {
+async function putReviewsReport (req, res) {
   models.putReviewsReport(req.params)
-    .then(() => {
-      res.status(204).send('Successfully change report status');
-    })
-    .catch((err) => {
-      throw new Error('Failed to change report status', err);
-    });
+  .then(() => {
+    res.status(204).send('Successfully change report status');
+  })
+  .catch((err) => {
+    throw new Error('Failed to change report status', err);
+  });
 };
 
 function getLoaderToken (req, res) {
