@@ -84,16 +84,11 @@ async function getReviewsMeta(req, res) {
 };
 
 async function postReviews (req, res) {
-  // if reviews of this product is not existing in the cache OR the cache is not sorted by the newest date:
-    // update the db
-    // update the cache later
-  // else:
-    // update the cache
-    // update the db later
   const product = req.body.product_id;
   const [rating, summary, body, recommend, name, photos] = [req.body.rating, req.body.summary, req.body.body, req.body.recommend, req.body.name, req.body.photos];
   const cacheResult = await redisClient.get(String(product));
   const parseCacheResult = JSON.parse(cacheResult);
+
   if (cacheResult === null || parseCacheResult['sort'] !== 'newest') {
     models.postReviews(req.body)
     .then(async () => {
@@ -133,23 +128,48 @@ async function postReviews (req, res) {
 
 };
 
-
 async function putReviewsHelpfulness (req, res) {
-  // if not in the cache:
-    // add the product reviews into the cache
   // if in the cache:
-    // update the cache
-  // then update db later
+    // update the cache, then update db later
+  // if not in the cache:
+    // update the db first, then update the caching for this product
 
-  await models.putReviewsHelpfulness(req.params)
-  .then((data) => {
-    // console.log('update', data);
+  const review_id = req.params.review_id;
+  const getProductId = await models.getProductId(review_id);
+  const product_id = getProductId.rows[0].product_id;
+  const cacheResult = await redisClient.get(String(product_id));
+  const parseCacheResult = JSON.parse(cacheResult);
+
+  if (parseCacheResult) {
+    const results = parseCacheResult.results;
+    let cacheIncludesReviewId = false;
+    results.map(review_obj => {
+      if (review_obj['review_id'] == review_id) {
+        review_obj['helpfulness']++;
+        cacheIncludesReviewId = true;
+      }
+    })
+    cacheIncludesReviewId ? redisClient.set(String(product_id), JSON.stringify(parseCacheResult)) : null;
+  }
+
+  models.putReviewsHelpfulness(req.params)
+  .then(async (data) => {
+    const product_id = data.rows[0].product_id;
+    if (!parseCacheResult) {
+      try {
+        const result = await helper(String(product_id), 5, 1, 'relevant');
+        await redisClient.set(String(product_id), JSON.stringify(result));
+      } catch (e) {
+        console.log(e);
+      }
+    }
     res.status(204).send('Successfully increase the helpfulness');
   })
   .catch((err) => {
-    throw new Error('Failed to change helpfulness', err);
+    console.log(err);
   });
 };
+
 
 async function putReviewsReport (req, res) {
   models.putReviewsReport(req.params)
@@ -164,6 +184,5 @@ async function putReviewsReport (req, res) {
 function getLoaderToken (req, res) {
   res.status(200).send(loader);
 };
-
 
 module.exports = { returnReviews, cacheDataReviews, getReviews, getReviewsMeta, postReviews, putReviewsHelpfulness, putReviewsReport, getLoaderToken };

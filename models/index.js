@@ -153,7 +153,6 @@ exports.postReviews = async (obj) => {
 
 };
 
-
 exports.getMaxReviewId = (product_id) => {
   return db.query(`SELECT MAX(review_id) FROM reviews WHERE product_id = ${product_id}`);
 }
@@ -169,6 +168,10 @@ exports.putReviewsHelpfulness = async (obj) => {
   const result = await db.query(text);
   return result;
 };
+
+exports.getProductId = (review_id) => {
+  return db.query(`SELECT product_id FROM reviews WHERE review_id = ${review_id}`);
+}
 
 // change report status:
 exports.putReviewsReport = async (obj) => {
