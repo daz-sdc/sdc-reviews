@@ -45,14 +45,37 @@ async function helper(product, count, page, sort) {
     } else {
       reviews = await models.getReviewsRelevant(product, count, page);
     }
-    await Promise.all(reviews.rows).then((bigBox) => {
-      output.results = bigBox;
-      redisClient.set(String(product), JSON.stringify(output));
-    });
+
+    const results = reviews.rows;
+
+    try {
+      await Promise.all(results.map(async(review, index) => {
+        const review_id = review.review_id;
+        const photos = await models.json_agg_photos(review_id);
+        results[index]['photos'] = photos.rows[0].photos;
+      }))
+    } catch(e) {
+      console.log(e);
+    }
+    output.results = results;
+    redisClient.set(String(product), JSON.stringify(output));
+
+    // await Promise.all(results.map(async(review, index) => {
+    //   const review_id = review.review_id;
+    //   const photos = await models.json_agg_photos(review_id);
+    //   results[index]['photos'] = photos.rows[0].photos;
+    // }))
+    // .then(() => {
+    //   output.results = results
+    // })
+    // .then(() => {
+    //   redisClient.set(String(product), JSON.stringify(output))
+    // })
+
   } catch (e) {
     console.log(e);
   }
-
+  
   return output;
 }
 
