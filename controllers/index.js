@@ -39,11 +39,11 @@ async function helper(product, count, page, sort) {
 
   try {
     if (sort === 'helpful') {
-      reviews = await models.getReviewsHelpful(product, count, page);
+      reviews = await models.getReviewsHelpfulWithoutPhotos(product, count, page);
     } else if (sort === 'newest') {
-      reviews = await models.getReviewsNewest(product, count, page);
+      reviews = await models.getReviewsNewestWithoutPhotos(product, count, page);
     } else {
-      reviews = await models.getReviewsRelevant(product, count, page);
+      reviews = await models.getReviewsRelevantWithoutPhotos(product, count, page);
     }
 
     const results = reviews.rows;
@@ -59,23 +59,10 @@ async function helper(product, count, page, sort) {
     }
     output.results = results;
     redisClient.set(String(product), JSON.stringify(output));
-
-    // await Promise.all(results.map(async(review, index) => {
-    //   const review_id = review.review_id;
-    //   const photos = await models.json_agg_photos(review_id);
-    //   results[index]['photos'] = photos.rows[0].photos;
-    // }))
-    // .then(() => {
-    //   output.results = results
-    // })
-    // .then(() => {
-    //   redisClient.set(String(product), JSON.stringify(output))
-    // })
-
   } catch (e) {
     console.log(e);
   }
-  
+
   return output;
 }
 
