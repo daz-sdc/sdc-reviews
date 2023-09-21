@@ -33,7 +33,7 @@ async function cacheDataReviews(req, res, next) {
   }
 }
 
-async function helper(product, count, page, sort) {
+async function saveToCacheReviews(product, count, page, sort) {
   const output = { product, page, count, sort};
   let reviews;
 
@@ -59,38 +59,41 @@ async function helper(product, count, page, sort) {
     }
 
     output.results = results;
-    redisClient.set(String(product), JSON.stringify(output));
+    await redisClient.set(String(product), JSON.stringify(output));
 
   } catch (e) {
     console.log(e);
   }
 
-  return output;
 }
 
 async function getReviews(req, res) {
   const product = req.query.product_id;
-  const count = Number(req.query.count) || 5;
   const page = Number(req.query.page) || 1;
+  const count = Number(req.query.count) || 5;
   const sort = (!['newest', 'helpful', 'relevant'].includes(req.query.sort)) ? 'relevant' : req.query.sort;
+
+  await saveToCacheReviews(product, count, page, sort);
+
   try {
-    const output = await helper(product, count, page, sort);
-    res.status(200).send(output);
+    const result = await redisClient.get(String(product));
+    res.status(200).send(JSON.parse(result));
   } catch (e) {
     console.log(e);
   }
 };
+
 
 async function getReviewsMeta(req, res) {
   const output = {
     product_id: req.query.product_id,
   };
   models.getReviewsMeta(req.query.product_id)
-    .then((data) => {
-      Object.assign(output, data.rows[0]);
-      res.status(200).send(output);
-    })
-    .catch(e => console.log(e));
+  .then((data) => {
+    Object.assign(output, data.rows[0]);
+    res.status(200).send(output);
+  })
+  .catch(e => console.log(e));
 };
 
 async function postReviews (req, res) {
@@ -103,7 +106,7 @@ async function postReviews (req, res) {
     models.postReviews(req.body)
     .then(async () => {
       try {
-        const result = await helper(String(product), 5, 1, 'relevant');
+        const result = await saveToCacheReviews(String(product), 5, 1, 'relevant');
         await redisClient.set(String(product), JSON.stringify(result));
       } catch (e) {
         console.log(e);
@@ -162,7 +165,7 @@ async function putReviewsHelpfulness (req, res) {
     const product_id = data.rows[0].product_id;
     if (!parseCacheResult) {
       try {
-        const result = await helper(String(product_id), 5, 1, 'relevant');
+        const result = await saveToCacheReviews(String(product_id), 5, 1, 'relevant');
         await redisClient.set(String(product_id), JSON.stringify(result));
       } catch (e) {
         console.log(e);
