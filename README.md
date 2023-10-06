@@ -10,4 +10,6 @@ Build, deploy and scale a back end system to support the Ratings & Reviews micro
 ![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?&style=for-the-badge&logo=redis&logoColor=white)
 ![NGINX](https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white)
 
-
+### System Design Diagrams (created using [draw.io](https://www.drawio.com/))
+• Diagram for GET requests:
+![GET](./system_design_graphs/sdc-GET-diagram.png)
