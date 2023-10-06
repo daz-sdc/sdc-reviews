@@ -2,7 +2,7 @@
 /node_modules
 .env
 *.pem
-pg_dump_sdc.pgsql
+sdc.pgsql
 *.sh
 *.log
 *.rdb

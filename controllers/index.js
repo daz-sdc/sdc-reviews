@@ -8,6 +8,7 @@ let redisClient;
   redisClient = Redis.createClient({
     host: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT,
+    username: process.env.REDIS_USERNAME,
     password: process.env.REDIS_PASSWORD
   });
   redisClient.on('error', err => console.log('Redis Client Error', err));
@@ -33,7 +34,7 @@ async function cacheDataReviews(req, res, next) {
   }
 }
 
-async function helper(product, count, page, sort) {
+async function saveReviewToCache(product, count, page, sort) {
   const output = { product, page, count, sort};
   let reviews;
 
@@ -57,21 +58,25 @@ async function helper(product, count, page, sort) {
     } catch(e) {
       console.log(e);
     }
+
     output.results = results;
     redisClient.set(String(product), JSON.stringify(output));
+
   } catch (e) {
     console.log(e);
   }
 
   return output;
+
 }
+
 
 async function returnReviews(req) {
   const product = req.query.product_id;
   const count = Number(req.query.count) || 5;
   const page = Number(req.query.page) || 1;
   const sort = (!['newest', 'helpful', 'relevant'].includes(req.query.sort)) ? 'relevant' : req.query.sort;
-  const result = await helper(product, count, page, sort);
+  const result = await saveReviewToCache(product, count, page, sort);
 
   return result;
 };
@@ -103,7 +108,7 @@ async function postReviews (req, res) {
     models.postReviews(req.body)
     .then(async () => {
       try {
-        const result = await helper(String(product), 5, 1, 'relevant');
+        const result = await saveReviewToCache(String(product), 5, 1, 'relevant');
         await redisClient.set(String(product), JSON.stringify(result));
       } catch (e) {
         console.log(e);
@@ -132,17 +137,13 @@ async function postReviews (req, res) {
     redisClient.set(String(product), JSON.stringify(parseCacheResult));
     try {
       await models.postReviews(req.body)
+      res.status(201).send('Successfully update new review in the cache and then db');
     } catch (e) {console.log(e)};
-    res.status(201).send('Successfully update new review in the cache and then db');
   }
 
 };
 
 async function putReviewsHelpfulness (req, res) {
-  // if in the cache:
-    // update the cache, then update db later
-  // if not in the cache:
-    // update the db first, then update the caching for this product
 
   const review_id = req.params.review_id;
   const getProductId = await models.getProductId(review_id);
@@ -167,7 +168,7 @@ async function putReviewsHelpfulness (req, res) {
     const product_id = data.rows[0].product_id;
     if (!parseCacheResult) {
       try {
-        const result = await helper(String(product_id), 5, 1, 'relevant');
+        const result = await saveReviewToCache(String(product_id), 5, 1, 'relevant');
         await redisClient.set(String(product_id), JSON.stringify(result));
       } catch (e) {
         console.log(e);
@@ -195,4 +196,4 @@ function getLoaderToken (req, res) {
   res.status(200).send(loader);
 };
 
-module.exports = { returnReviews, cacheDataReviews, getReviews, getReviewsMeta, postReviews, putReviewsHelpfulness, putReviewsReport, getLoaderToken };
+module.exports = { cacheDataReviews, getReviews, getReviewsMeta, postReviews, putReviewsHelpfulness, putReviewsReport, getLoaderToken };

@@ -59,7 +59,7 @@ ALTER TABLE reviews
     USING
          timestamp with time zone 'epoch' + date * interval '1 millisecond';
 
-         
+
 -- create indices on tables:
 
 CREATE INDEX idx_productid_and_reviewid ON reviews(product_id, review_id);
@@ -68,7 +68,7 @@ CREATE INDEX idx_productid_char ON characteristics(product_id);
 CREATE INDEX idx_charid_char_reviews ON characteristic_reviews(characteristic_id);
 
 -- Sync primary key sequences:
-SELECT setval('reviews_id_seq', (SELECT MAX(review_id) FROM reviews));
+SELECT setval('reviews_review_id_seq', (SELECT MAX(review_id) FROM reviews));
 SELECT setval('reviews_photos_id_seq', (SELECT MAX(id) FROM reviews_photos));
 SELECT setval('characteristics_id_seq', (SELECT MAX(id) FROM characteristics));
 SELECT setval('characteristic_reviews_id_seq', (SELECT MAX(id) FROM characteristic_reviews));
