@@ -12,4 +12,6 @@ Build, deploy and scale a back end system to support the Ratings & Reviews micro
 
 ### System Design Diagrams (created using [draw.io](https://www.drawio.com/))
 • Diagram for GET requests:
-![GET](./system_design_graphs/sdc-GET-diagram.png)
+![GET](./system_design_graphs/GET-diagram.png)
+• Diagram for POST requests:
+![POST](./system_design_graphs/POST-diagram.png)
