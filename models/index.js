@@ -27,12 +27,14 @@ exports.getReviewsRelevantWithoutPhotos = (id, count, page) => {
   const text = `SELECT review_id, rating, summary, response, body, date, recommend, reviewer_name, helpfulness
                 FROM reviews
                 WHERE product_id = $1
-                ORDER BY RANK() OVER (ORDER BY helpfulness DESC) + RANK() OVER (ORDER BY date DESC) ASC
+                ORDER BY helpfulness + RANK() OVER (ORDER BY date ASC) DESC
                 LIMIT $2
                 OFFSET ($3 - 1) * $2`;
   const params = [id, count, page];
   return db.query(text, params);
 };
+
+// SELECT date, helpfulness, (helpfulness + RANK() OVER (ORDER BY date ASC)) AS rank FROM reviews WHERE product_id = 50 ORDER BY rank DESC;
 
 exports.json_agg_photos = (review_id) => {
   const text = `SELECT
@@ -102,7 +104,7 @@ exports.getReviewsMeta = (id) => {
 // post reviews:
 exports.postReviews = async (obj) => {
   const text1 = `INSERT INTO reviews (review_id, product_id, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
-                 SELECT nextval('reviews_id_seq'), $1, $2, current_timestamp, $3, $4, $5, FALSE, $6, $7, NULL, 0
+                 SELECT nextval('reviews_review_id_seq'), $1, $2, current_timestamp, $3, $4, $5, FALSE, $6, $7, NULL, 0
                  RETURNING review_id`;
   const params = [obj.product_id, obj.rating, obj.summary, obj.body, obj.recommend, obj.name, obj.email];
 

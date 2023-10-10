@@ -104,7 +104,7 @@ async function postReviews (req, res) {
   const cacheResult = await redisClient.get(String(product));
   const parseCacheResult = JSON.parse(cacheResult);
 
-  if (cacheResult === null || parseCacheResult['sort'] !== 'newest') {
+  if (cacheResult === null) {
     models.postReviews(req.body)
     .then(async () => {
       try {
@@ -119,13 +119,14 @@ async function postReviews (req, res) {
   } else {
     let newReview = {};
     Object.assign(newReview, {rating, summary, body, recommend, reviewer_name: name, photos, 'date': new Date().toISOString(), 'helpfulness': 0, 'response': 'null'});
+
     await models.getMaxReviewId(product)
-    .then(async (r_data) => {
-      const maxReviewId = r_data.rows[0].max;
+    .then(async (max_review_id) => {
+      const maxReviewId = max_review_id.rows[0].max;
       newReview['review_id'] = maxReviewId + 1;
       await models.getMaxPhotoId(maxReviewId)
-      .then((p_data) => {
-        let maxPhotoId = p_data.rows[0].max;
+      .then((max_photo_id) => {
+        let maxPhotoId = max_photo_id.rows[0].max;
         newReview['photos'].map((photo, index) => {
           newReview['photos'][index] = {'id': maxPhotoId++, 'url': photo}
         })
@@ -133,7 +134,44 @@ async function postReviews (req, res) {
       .catch(e => console.log(e));
     })
     .catch(e => console.log(e));
-    parseCacheResult['results'].unshift(newReview);
+
+    if (parseCacheResult['sort'] === 'newest') {
+      parseCacheResult['results'].unshift(newReview);
+    } else if (parseCacheResult['sort'] === 'helpful') {
+      let count = 0;
+      for (let i = 0; i < parseCacheResult['results'].length; i++) {
+        if (parseCacheResult['results'][i] === 0) {
+          count++;
+          parseCacheResult['results'].splice(i, 0, newReview);
+          break;
+        }
+      }
+      count === 0 ? parseCacheResult['results'][parseCacheResult['results'].length] = newReview : null;
+    } else {
+      let order_by_date = [];
+      parseCacheResult['results'].forEach((review, index) => order_by_date.push([review.date, index, review.helpfulness]));
+      order_by_date.sort((a, b) => new Date(a[0]) - new Date(b[0]));
+
+      order_by_date.map((arr, rank_number_newest) => {
+        arr.shift();
+        arr[2] = rank_number_newest + arr[1];
+        return arr;
+      })
+
+      let count = 0;
+      console.log(order_by_date.sort((a, b) => b[2] - a[2]));
+
+      for (let rank_arr of order_by_date.sort((a, b) => b[2] - a[2])) {
+        if (order_by_date.length > rank_arr[2]) {
+          count++;
+          parseCacheResult['results'].splice(rank_arr[0], 0, newReview);
+          break;
+        }
+      }
+
+      count === 0 ? parseCacheResult['results'][order_by_date.length] = newReview : null;
+
+    }
     redisClient.set(String(product), JSON.stringify(parseCacheResult));
     try {
       await models.postReviews(req.body)
