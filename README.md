@@ -22,9 +22,9 @@ When I started, I only focused on speeding up GET requests. There are over 20M r
 <br> 
 
 ***Before Deployment (initial results without any optimization)*** :
-<p align="center">
-    <img height="500" alt="localhost-result-GET-reviews" src="https://github.com/daz-sdc/sdc-reviews/assets/77268619/b666da41-47e7-4e17-8878-eb5e2cc5b04b" />
-    <img height="500" alt="localhost-result-GET-reviews-metadata" src="https://github.com/daz-sdc/sdc-reviews/assets/77268619/a2108860-ec08-422d-b22f-0ef1aab2daec" />
+<p align="left">
+    <img height="340" alt="localhost-result-GET-reviews" src="https://github.com/daz-sdc/sdc-reviews/assets/77268619/b666da41-47e7-4e17-8878-eb5e2cc5b04b" />
+    <img height="340" alt="localhost-result-GET-reviews-metadata" src="https://github.com/daz-sdc/sdc-reviews/assets/77268619/a2108860-ec08-422d-b22f-0ef1aab2daec" />
 </p>
 
   You can see from the above records, both GET requests were super slow: 
@@ -32,7 +32,7 @@ When I started, I only focused on speeding up GET requests. There are over 20M r
   * For GET /reviews/meta, the average response times were over 12s per request.
 
 ***After Deploying on AWS (Strategy: SQL query optimization + Materialized views + Load balancer)*** :
-<p align="center">
+<p align="left">
     <img height="500" alt="Deployed-GET-reviews" src="https://github.com/daz-sdc/sdc-reviews/assets/77268619/a38746aa-20d7-45b6-a761-00d7c0023619" />
     <img height="500" alt="Deployed-GET-reviews-metadata" src="https://github.com/daz-sdc/sdc-reviews/assets/77268619/955c0d48-d138-467b-a24a-2ee0d09568ac" />
 </p>
